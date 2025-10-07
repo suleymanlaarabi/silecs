@@ -71,6 +71,12 @@ void ecs_fini(ecs_world_t *world) {
 
     ecs_component_storage_fini(&world->component_storage);
 
+    ecs_vec_t *component_archetypes = world->component_archetypes.dense.data;
+    uint32_t component_archetype_count = world->component_archetypes.dense.count;
+
+    for (uint32_t i = 0; i < component_archetype_count; i++) {
+        ecs_vec_free(&component_archetypes[i]);
+    }
     ecs_sparseset_fini(&world->component_archetypes);
 
     free(world);

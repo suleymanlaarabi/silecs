@@ -36,6 +36,7 @@ void ecs_component_storage_fini(ecs_component_storage_t *storage) {
     for (uint32_t i = 0; i < count; i ++) {
         ecs_component_record_t *record = &records[i];
         ecs_vec_free(&record->archetypes);
+        ecs_observer_fini(&record->observer);
     }
     ecs_sparseset_fini(&storage->component_meta);
 }
