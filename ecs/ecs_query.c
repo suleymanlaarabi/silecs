@@ -69,6 +69,8 @@ static void ecs_query_update_matches(ecs_world_t *world, ecs_query_cache_t *cach
         }
     }
 
+    archetypes = world->archetypes.data;
+    len = world->archetypes.count;
     for (uint32_t i = 0; i < len; i++) {
         if (ecs_query_match_type(&cache->query, &archetypes[i].type)) {
             ecs_vec_push(&cache->archetypes, &i);

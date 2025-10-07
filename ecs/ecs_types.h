@@ -33,9 +33,10 @@
         _ecs_id_name(component).entity = ecs_new(world);  \
         ecs_set_component_meta(world, _ecs_id_name(component).entity, sizeof(component)); \
         ecs_add(world, ecs_id(component), ecs_id(EcsName)); \
-        ecs_add(world, ecs_id(component), ecs_id(EcsComponent)); \
         char *ECS_##component##Name = #component; \
-        ecs_set(world, ecs_id(component), ecs_id(EcsName), &ECS_##component##Name);
+        ecs_set(world, ecs_id(component), ecs_id(EcsName), &ECS_##component##Name); \
+        ecs_add(world, ecs_id(component), ecs_id(EcsComponent));
+
 
     #define ECS_TAG_REGISTER(world, tag) \
         _ecs_id_name(tag).entity = ecs_new(world);  \

@@ -49,6 +49,7 @@ ecs_entity_t ecs_register_system_phase(
     ecs_entity_t system = ecs_register_system(world, func, query);
 
     ecs_add_pair(world, system, ecs_id(EcsPhase), phase);
+
     free(query);
     return system;
 }

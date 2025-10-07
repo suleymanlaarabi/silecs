@@ -2,7 +2,10 @@
 #include "ecs_system.h"
 #include "ecs_types.h"
 #include "ecs_world.h"
+#include "test.h"
 #include <criterion/criterion.h>
+#include <stdint.h>
+#include <stdio.h>
 
 static int call_count = 0;
 void simple_system(ecs_iter_t *it) {
@@ -69,4 +72,39 @@ Test(system, medium) {
     ecs_run_phase(world);
 
     cr_assert(medium_count == 2);
+}
+
+
+void PosVelSys(ecs_iter_t *it) {
+    Position *p = ecs_field(it, Position);
+    Velocity *v = ecs_field(it, Velocity);
+
+    for (uint32_t i = 0; i < it->count; i++) {
+        p[i].x += v[i].x;
+        p[i].y += v[i].y;
+    }
+}
+
+Test(system, relation) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_REGISTER_COMPONENT(world, Position);
+    ECS_REGISTER_COMPONENT(world, Velocity);
+
+    ecs_entity_t player = ecs_new(world);
+    ecs_add(world, player, ecs_id(Position));
+    ecs_add(world, player, ecs_id(Velocity));
+
+    ecs_set(world, player, ecs_id(Position), &(Position) {0, 0});
+    ecs_set(world, player, ecs_id(Velocity), &(Velocity) {1, 1});
+
+    ECS_SYSTEM(world, PosVelSys, EcsOnUpdate, Position, Velocity);
+
+    Position *pos = ecs_get(world, player, ecs_id(Position));
+
+    cr_assert_eq(pos->x, 0);
+    cr_assert_eq(pos->y, 0);
+    ecs_run_phase(world);
+    cr_assert_eq(pos->x, 1);
+    cr_assert_eq(pos->y, 1);
 }

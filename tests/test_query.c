@@ -6,14 +6,7 @@
 #include <criterion/criterion.h>
 #include <ecs_world.h>
 #include <stdio.h>
-
-typedef struct {} Position;
-typedef struct {} Health;
-typedef struct {} Jump;
-
-ECS_COMPONENT_DEFINE(Position);
-ECS_COMPONENT_DEFINE(Health);
-ECS_COMPONENT_DEFINE(Jump);
+#include "test.h"
 
 ecs_world_t *bootstrap(void) {
     ecs_world_t *world = ecs_init();
