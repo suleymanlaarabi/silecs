@@ -24,11 +24,15 @@ void OnAddComponent(ecs_world_t *world, ecs_entity_t entity) {
     ecs_sparseset_insert(&world->component_archetypes, entity.value, &vec);
 }
 
-void EcsBootstrapModule(ecs_world_t *world) {
-    ECS_TAG_REGISTER(world, EcsWildcard);
-    ECS_TAG_REGISTER(world, EcsChildOf);
-    ECS_REGISTER_COMPONENT(world, EcsComponent);
+const char *ChildOfName = "ChildOf";
 
+void EcsBootstrapModule(ecs_world_t *world) {
+    ECS_REGISTER_COMPONENT(world, EcsComponent);
     ecs_set_hook(world, ecs_id(EcsName), OnAddName);
     ecs_add_hook(world, ecs_id(EcsComponent), OnAddComponent);
+
+    ECS_TAG_REGISTER(world, EcsWildcard);
+    ECS_TAG_REGISTER(world, EcsChildOf);
+
+    ecs_set(world, ecs_id(EcsChildOf), ecs_id(EcsName), &ChildOfName);
 }
