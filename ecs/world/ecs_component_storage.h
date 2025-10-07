@@ -1,8 +1,8 @@
 #ifndef ECS_COMPONENT_STORAGE_H
     #define ECS_COMPONENT_STORAGE_H
     #include "ecs_archetype.h"
-#include "ecs_config.h"
-#include "ecs_observer.h"
+    #include "ecs_config.h"
+    #include "ecs_observer.h"
     #include "ecs_sparseset.h"
     #include "ecs_types.h"
     #include "ecs_vec.h"
