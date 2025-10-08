@@ -85,7 +85,7 @@ void PosVelSys(ecs_iter_t *it) {
     }
 }
 
-Test(system, relation) {
+Test(system, pos_vel) {
     ecs_world_t *world = ecs_init();
 
     ECS_REGISTER_COMPONENT(world, Position);
@@ -107,4 +107,30 @@ Test(system, relation) {
     ecs_run_phase(world);
     cr_assert_eq(pos->x, 1);
     cr_assert_eq(pos->y, 1);
+}
+
+
+Test(system, killed) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_REGISTER_COMPONENT(world, Position);
+    ECS_REGISTER_COMPONENT(world, Velocity);
+
+    ecs_entity_t player = ecs_new(world);
+    ecs_add(world, player, ecs_id(Position));
+    ecs_add(world, player, ecs_id(Velocity));
+
+    ecs_set(world, player, ecs_id(Position), &(Position) {0, 0});
+    ecs_set(world, player, ecs_id(Velocity), &(Velocity) {1, 1});
+
+    ECS_SYSTEM(world, PosVelSys, EcsOnUpdate, Position, Velocity);
+
+    Position *pos = ecs_get(world, player, ecs_id(Position));
+
+    cr_assert_eq(pos->x, 0);
+    cr_assert_eq(pos->y, 0);
+    ecs_kill(world, player);
+    ecs_run_phase(world);
+    cr_assert_eq(pos->x, 0);
+    cr_assert_eq(pos->y, 0);
 }

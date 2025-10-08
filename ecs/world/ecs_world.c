@@ -12,6 +12,7 @@
 #include "ecs_vec.h"
 #include "ecs_module.h"
 #include <ecs_world.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -254,4 +255,10 @@ void ecs_remove_pair(ecs_world_t *world, ecs_entity_t source, ecs_entity_t relat
         }
     }
     ecs_remove(world, source, ecs_make_pair(relation, ecs_id(EcsWildcard)));
+}
+
+void ecs_kill(ecs_world_t *world, ecs_entity_t entity) {
+    ecs_entity_record_t *record = ECS_GET_RECORD(world, entity);
+    ecs_archetype_remove_entity(ecs_world_get_archetype(world, record->archetype_id), record->row);
+    ecs_entity_manager_kill(&world->entity_manager, entity.index);
 }

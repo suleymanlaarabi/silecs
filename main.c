@@ -1,8 +1,6 @@
-#include "ecs_debug.h"
 #include "ecs_query.h"
 #include "ecs_system.h"
 #include "ecs_types.h"
-#include "ecs_vec.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -13,9 +11,11 @@
 typedef struct {
     int x, y;
 } Position, Velocity;
+
 typedef struct {
     int value;
 } Health;
+
 typedef struct {} Jump;
 
 ECS_COMPONENT_DEFINE(Jump);
@@ -47,7 +47,6 @@ int main() {
 
     ecs_set(world, player, ecs_id(Position), &(Position) {0, 0});
     ecs_set(world, player, ecs_id(Velocity), &(Velocity) {1, 1});
-
 
     ecs_run_phase(world);
 

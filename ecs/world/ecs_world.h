@@ -5,7 +5,7 @@
     #include "ecs_config.h"
     #include "ecs_entity.h"
     #include "ecs_query.h"
-#include "ecs_sparseset.h"
+    #include "ecs_sparseset.h"
     #include "ecs_types.h"
     #include "ecs_vec.h"
     #include "ecs_map.h"
@@ -47,6 +47,7 @@ void ecs_remove_pair(ecs_world_t *world, ecs_entity_t source, ecs_entity_t relat
 void ecs_remove_hook(ecs_world_t *world, ecs_entity_t component, ecs_component_hook_call call);
 void ecs_add_hook(ecs_world_t *world, ecs_entity_t component, ecs_component_hook_call call);
 void ecs_set_hook(ecs_world_t *world, ecs_entity_t component, ecs_component_hook_call call);
+void ecs_kill(ecs_world_t *world, ecs_entity_t entity);
 void ecs_fini(ecs_world_t *world);
 
 ECS_INLINE
