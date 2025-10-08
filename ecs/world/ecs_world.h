@@ -47,6 +47,7 @@ void ecs_remove_pair(ecs_world_t *world, ecs_entity_t source, ecs_entity_t relat
 void ecs_remove_hook(ecs_world_t *world, ecs_entity_t component, ecs_component_hook_call call);
 void ecs_add_hook(ecs_world_t *world, ecs_entity_t component, ecs_component_hook_call call);
 void ecs_set_hook(ecs_world_t *world, ecs_entity_t component, ecs_component_hook_call call);
+bool ecs_is_alive(ecs_world_t *world, ecs_entity_t entity);
 void ecs_kill(ecs_world_t *world, ecs_entity_t entity);
 void ecs_fini(ecs_world_t *world);
 
