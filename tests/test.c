@@ -1,0 +1,7 @@
+#include "test.h"
+
+ECS_COMPONENT_DEFINE(Jump);
+ECS_COMPONENT_DEFINE(Position);
+ECS_COMPONENT_DEFINE(Velocity);
+ECS_COMPONENT_DEFINE(Health);
+ECS_TAG_DEFINE(MainScene);
