@@ -50,3 +50,11 @@ void ecs_print_entity(ecs_world_t *world, ecs_entity_t entity) {
     print_entity(entity);
     ecs_print_type(world, &ecs_world_get_entity_archetype(world, entity)->type);
 }
+
+
+void ecs_archetype_print(ecs_archetype_t *archetype)
+{
+    printf("Archetype: ");
+    ecs_vec_print_type(&archetype->type);
+    printf("\n");
+}

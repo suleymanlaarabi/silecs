@@ -10,11 +10,13 @@ typedef struct {
     int value;
 } Health;
 typedef struct {} Jump;
+typedef struct {} MainScene;
 
 ECS_COMPONENT_DECLARE(Jump);
 ECS_COMPONENT_DECLARE(Position);
 ECS_COMPONENT_DECLARE(Velocity);
 ECS_COMPONENT_DECLARE(Health);
 ECS_TAG_DECLARE(MainScene);
+ECS_COMPONENT_DECLARE(MainScene);
 
 #endif

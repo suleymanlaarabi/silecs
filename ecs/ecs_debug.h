@@ -9,4 +9,6 @@ void ecs_print_entity(ecs_world_t *world, ecs_entity_t entity);
 void ecs_print_query(ecs_world_t *world, ecs_query_t *query);
 void ecs_print_queryid(ecs_world_t *world, EcsQueryId id);
 
+void ecs_archetype_print(ecs_archetype_t *archetype);
+
 #endif

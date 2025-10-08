@@ -36,11 +36,7 @@ ecs_world_t *ecs_init(void) {
 
     ecs_new(world);
 
-    ECS_EcsNameID.entity = ecs_new(world);
-    ECS_EcsNameID.name = "EcsName";
-    ECS_EcsNameID.size = sizeof(EcsName);
-    ecs_set_component_meta(world, ECS_EcsNameID.entity, ECS_EcsNameID.size);
-
+    ECS_REGISTER_COMPONENT(world, EcsName);
     ecs_init_module(world);
     ECS_IMPORT(world, EcsBootstrapModule);
     ECS_IMPORT(world, EcsQueryModule);
