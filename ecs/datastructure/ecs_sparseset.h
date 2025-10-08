@@ -1,6 +1,5 @@
 #ifndef ECS_SPARSESET_H
-#define ECS_SPARSESET_H
-
+    #define ECS_SPARSESET_H
     #include "ecs_vec.h"
     #include <stdbool.h>
     #include <stdint.h>

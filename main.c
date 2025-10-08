@@ -7,7 +7,6 @@
 #include <ecs_world.h>
 #include <string.h>
 
-
 typedef struct {
     int x, y;
 } Position, Velocity;
@@ -34,12 +33,27 @@ void PosVelSys(ecs_iter_t *it) {
     }
 }
 
+void onPreUpdate() {
+    puts("on pre update");
+}
+
+void onUpdate() {
+    puts("on update");
+}
+
+void onPostUpdate() {
+    puts("on post update");
+}
+
 int main() {
     ecs_world_t *world = ecs_init();
 
     ECS_REGISTER_COMPONENT(world, Position);
     ECS_REGISTER_COMPONENT(world, Velocity);
-    ECS_SYSTEM(world, PosVelSys, EcsOnUpdate, Position, Velocity);
+
+    ECS_SYSTEM(world, onPostUpdate, EcsOnPostUpdate, Position, Velocity);
+    ECS_SYSTEM(world, onPreUpdate, EcsOnPreUpdate, Position, Velocity);
+    ECS_SYSTEM(world, onUpdate, EcsOnUpdate, Position, Velocity);
 
     ecs_entity_t player = ecs_new(world);
     ecs_add(world, player, ecs_id(Position));
@@ -47,11 +61,5 @@ int main() {
 
     ecs_set(world, player, ecs_id(Position), &(Position) {0, 0});
     ecs_set(world, player, ecs_id(Velocity), &(Velocity) {1, 1});
-
-    ecs_run_phase(world);
-
-    Position *pos = ecs_get(world, player, ecs_id(Position));
-    printf("Position: (%d, %d)\n", pos->x, pos->y);
-    assert(pos->x == 1);
-    assert(pos->y == 1);
+    ecs_progress(world);
 }

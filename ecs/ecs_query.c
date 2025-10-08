@@ -19,7 +19,7 @@ bool ecs_query_match_type(ecs_query_t *query, ecs_type_t *type) {
     ecs_entity_t *entities = type->data;
     uint32_t tlen = type->count;
 
-    for (uint32_t i = 0; i < query->count; i++) {
+    for (uint32_t i = 0; i < query->terms[i].id.value; i++) {
         ecs_query_term_t term = query->terms[i];
         bool matched = false;
 
@@ -107,11 +107,9 @@ ecs_query_t *ecs_query_from_str(ecs_world_t *world, const char *str) {
     ecs_dsl_query_t *dsl_query = ecs_dsl_parser_parse(&parser);
 
     ecs_query_t *query = malloc(sizeof(ecs_query_t));
-    query->count = 0;
 
     for (uint32_t i = 0; i < dsl_query->count && i < 8; i++) {
         query->terms[i] = ecs_query_term_from_dsl(world, dsl_query->terms[i]);
-        query->count++;
     }
 
     ecs_dsl_query_free(dsl_query);
@@ -121,12 +119,6 @@ ecs_query_t *ecs_query_from_str(ecs_world_t *world, const char *str) {
 }
 
 EcsQueryId ecs_query_register(ecs_world_t *world, ecs_query_t *query) {
-    if (query->count == 0) {
-        for (uint32_t i = 0; query->terms[i].id.value != 0; i++) {
-            query->count += 1;
-        }
-    }
-
     ecs_query_cache_t cache = {
         .archetypes = ecs_vec_create(sizeof(ecs_archetype_id_t)),
         .query = *query
@@ -134,7 +126,6 @@ EcsQueryId ecs_query_register(ecs_world_t *world, ecs_query_t *query) {
 
     ecs_query_update_matches(world, &cache);
     ecs_vec_push(&world->queries, &cache);
-
     return world->queries.count - 1;
 }
 

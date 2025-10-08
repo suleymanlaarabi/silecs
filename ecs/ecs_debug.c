@@ -31,11 +31,11 @@ void ecs_print_type(ecs_world_t *world, ecs_type_t *type) {
 
 void ecs_print_query(ecs_world_t *world, ecs_query_t *query) {
     printf("(");
-    for (uint32_t i = 0; i < query->count; i++) {
+    for (uint32_t i = 0; i < query->terms[i].id.value; i++) {
         ecs_query_term_t *term = &query->terms[i];
         printf("%s", term->oper == EcsQueryOperNot ? "!" : "");
         ecs_print_id(world, term->id);
-        printf("%s", i == query->count - 1 ? "" : ", ");
+        printf("%s", i == query->terms[i].id.value - 1 ? "" : ", ");
     }
     printf(")\n");
 }

@@ -28,7 +28,6 @@ typedef struct {
 
 typedef struct {
     ecs_query_term_t terms[8];
-    uint32_t count;
 } ecs_query_t;
 
 typedef struct {

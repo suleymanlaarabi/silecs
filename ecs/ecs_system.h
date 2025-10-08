@@ -2,10 +2,15 @@
     #define ECS_SYSTEM_H
     #include "ecs_query.h"
     #include "ecs_types.h"
-    #define ECS_SYSTEM(world, func, phase, ...) ecs_register_system_phase(world, func, ecs_id(phase), ecs_query_from_str(world, #__VA_ARGS__));
+    #include <stdlib.h>
+    #define ECS_SYSTEM(world, func, phase, ...) \
+        { \
+            ecs_query_t *query = ecs_query_from_str(world, #__VA_ARGS__); \
+            ecs_system(world, func, ecs_id(phase), query); \
+            free(query); \
+        }
 
 typedef struct ecs_world_t ecs_world_t;
-
 
 typedef void (*ecs_iter_func)(ecs_iter_t *it);
 
@@ -35,10 +40,9 @@ ECS_TAG_DECLARE(EcsOnUpdate);
 ECS_TAG_DECLARE(EcsOnPostUpdate);
 
 void EcsSystemModule(ecs_world_t *world);
-void ecs_run_phase(ecs_world_t *world);
+void ecs_progress(ecs_world_t *world);
 ecs_entity_t ecs_register_system(ecs_world_t *world, ecs_iter_func func, ecs_query_t *query);
-ecs_entity_t ecs_register_system_root(ecs_world_t *world, ecs_iter_func func, ecs_query_t *query);
-ecs_entity_t ecs_register_system_phase(
+ecs_entity_t ecs_system(
     ecs_world_t *world,
     ecs_iter_func func,
     ecs_entity_t phase,

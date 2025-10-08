@@ -14,8 +14,6 @@ ECS_TAG_DEFINE(EcsOnPreUpdate);
 ECS_TAG_DEFINE(EcsOnUpdate);
 ECS_TAG_DEFINE(EcsOnPostUpdate);
 
-
-
 ecs_entity_t ecs_register_system(ecs_world_t *world, ecs_iter_func func, ecs_query_t *query) {
     ecs_entity_t entity = ecs_new(world);
     EcsQueryId queryId = ecs_query_register(world, query);
@@ -40,7 +38,7 @@ ecs_entity_t ecs_register_system(ecs_world_t *world, ecs_iter_func func, ecs_que
     return entity;
 }
 
-ecs_entity_t ecs_register_system_phase(
+ecs_entity_t ecs_system(
     ecs_world_t *world,
     ecs_iter_func func,
     ecs_entity_t phase,
@@ -49,8 +47,6 @@ ecs_entity_t ecs_register_system_phase(
     ecs_entity_t system = ecs_register_system(world, func, query);
 
     ecs_add_pair(world, system, ecs_id(EcsPhase), phase);
-
-    free(query);
     return system;
 }
 
@@ -84,8 +80,10 @@ void ecs_invoke_systems(ecs_world_t *world, EcsQueryId query) {
     }
 }
 
-void ecs_run_phase(ecs_world_t *world) {
-    ecs_invoke_systems(world, world->phases_query);
+void ecs_progress(ecs_world_t *world) {
+    ecs_invoke_systems(world, world->OnPreUpdateQuery);
+    ecs_invoke_systems(world, world->OnUpdateQuery);
+    ecs_invoke_systems(world, world->OnPostUpdateQuery);
 }
 
 void EcsSystemModule(ecs_world_t *world) {
@@ -93,17 +91,36 @@ void EcsSystemModule(ecs_world_t *world) {
     ECS_REGISTER_COMPONENT(world, EcsDependsOn);
     ECS_REGISTER_COMPONENT(world, EcsEnables);
     ECS_REGISTER_COMPONENT(world, EcsPhase);
+
     ECS_TAG_REGISTER(world, EcsOnPreUpdate);
     ECS_TAG_REGISTER(world, EcsOnUpdate);
     ECS_TAG_REGISTER(world, EcsOnPostUpdate);
 
-    ecs_query_t phase_query = query({
+    ecs_query_t onPreUpdate = query({
         .terms = {
-            { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsWildcard)), .oper = EcsQueryOperEqual },
+            { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsOnPreUpdate)), .oper = EcsQueryOperEqual },
             { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
             { .id = ecs_id(EcsQueryId), .oper = EcsQueryOperEqual }
         },
     });
 
-    world->phases_query = ecs_query_register(world, &phase_query);
+    ecs_query_t onUpdate = query({
+        .terms = {
+            { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsOnUpdate)), .oper = EcsQueryOperEqual },
+            { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
+            { .id = ecs_id(EcsQueryId), .oper = EcsQueryOperEqual }
+        },
+    });
+
+    ecs_query_t onPostUpdate = query({
+        .terms = {
+            { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsOnPostUpdate)), .oper = EcsQueryOperEqual },
+            { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
+            { .id = ecs_id(EcsQueryId), .oper = EcsQueryOperEqual }
+        },
+    });
+
+    world->OnPreUpdateQuery = ecs_query_register(world, &onPreUpdate);
+    world->OnUpdateQuery = ecs_query_register(world, &onUpdate);
+    world->OnPostUpdateQuery = ecs_query_register(world, &onPostUpdate);
 }

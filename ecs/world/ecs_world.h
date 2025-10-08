@@ -29,9 +29,12 @@ typedef struct ecs_world_t {
     ecs_hashmap_t archetype_map;
     ecs_component_storage_t component_storage;
     ecs_vec_t queries;
-    EcsQueryId phases_query;
     ecs_strmap_t entity_map;
     ecs_sparseset_t component_archetypes; // ecs_vec<ecs_archetype_id>
+
+    EcsQueryId OnPreUpdateQuery;
+    EcsQueryId OnUpdateQuery;
+    EcsQueryId OnPostUpdateQuery;
 } ecs_world_t;
 
 typedef char* EcsName;
