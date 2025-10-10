@@ -42,7 +42,8 @@
         _ecs_id_name(tag).entity = ecs_new(world);  \
         ecs_add(world, ecs_id(tag), ecs_id(EcsName)); \
         char *ECS_##tag##Name = #tag; \
-        ecs_set(world, ecs_id(tag), ecs_id(EcsName), &ECS_##tag##Name);
+        ecs_set(world, ecs_id(tag), ecs_id(EcsName), &ECS_##tag##Name); \
+        ecs_add(world, ecs_id(tag), ecs_id(EcsComponent));
 
     #define ECS_COMPONENT_DECLARE(component) \
         extern ecs_component_desc_t ECS_##component##ID;

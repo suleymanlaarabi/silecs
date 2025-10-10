@@ -1,8 +1,5 @@
-#include "ecs_archetype.h"
-#include "ecs_sparseset.h"
 #include "ecs_strmap.h"
 #include "ecs_types.h"
-#include "ecs_vec.h"
 #include <ecs_bootstrap.h>
 #include <ecs_world.h>
 #include <stdio.h>
@@ -17,22 +14,19 @@ void OnAddName(ecs_world_t *world, ecs_entity_t entity) {
     ecs_strmap_set(&world->entity_map, *name, entity);
 }
 
-void OnAddComponent(ecs_world_t *world, ecs_entity_t entity) {
-    ecs_vec_t vec;
-    ecs_vec_init(&vec, sizeof(ecs_archetype_id_t));
-
-    ecs_sparseset_insert(&world->component_archetypes, entity.value, &vec);
-}
-
-
 void EcsBootstrapModule(ecs_world_t *world) {
     ecs_set_hook(world, ecs_id(EcsName), OnAddName);
 
     ECS_REGISTER_COMPONENT(world, EcsComponent);
-    ecs_add_hook(world, ecs_id(EcsComponent), OnAddComponent);
+    ecs_add(world, ecs_id(EcsName), ecs_id(EcsComponent));
+
     ECS_TAG_REGISTER(world, EcsWildcard);
     ECS_TAG_REGISTER(world, EcsChildOf);
 
     const char *ChildOfName = "ChildOf";
+    const char *EcsName = "EcsName";
+
     ecs_set(world, ecs_id(EcsChildOf), ecs_id(EcsName), &ChildOfName);
+    ecs_add(world, ecs_id(EcsName), ecs_id(EcsName));
+    ecs_set(world, ecs_id(EcsName), ecs_id(EcsName), &EcsName);
 }

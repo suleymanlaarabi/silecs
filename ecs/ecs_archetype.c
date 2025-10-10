@@ -51,8 +51,10 @@ uint32_t ecs_archetype_add_entity(ecs_archetype_t *archetype, ecs_entity_t entit
     return archetype->entities.count - 1;
 }
 
-ecs_archetype_remove_result_t ecs_archetype_remove_entity(ecs_archetype_t *archetype, size_t row)
-{
+ecs_archetype_remove_result_t ecs_archetype_remove_entity(
+    ecs_archetype_t *archetype,
+    size_t row
+) {
     ecs_archetype_remove_result_t result = {0};
     uint32_t *entities_data = (uint32_t *)archetype->entities.data;
 
@@ -72,29 +74,21 @@ ecs_archetype_remove_result_t ecs_archetype_remove_entity(ecs_archetype_t *arche
     return result;
 }
 
-void ecs_archetype_migrate_same_entity(ecs_archetype_t *src, ecs_archetype_t *dest, size_t row, size_t dest_row) {
-    ecs_vec_t *src_rows = src->rows.dense.data;
-    ecs_vec_t *dest_rows = dest->rows.dense.data;
-    int len = src->rows.dense.count;
-
-    for (int i = 0; i < len; i++) {
-        ecs_vec_copy_element(
-            &src_rows[i],
-            &dest_rows[i],
-            row, dest_row
-        );
-    }
-}
-
-void ecs_archetype_migrate_right_entity(ecs_archetype_t *src, ecs_archetype_t *dest, size_t row, size_t dest_row) {
-    int len = dest->rows.dense.count;
+void ecs_archetype_migrate_entity(
+    ecs_archetype_t *src,
+    ecs_archetype_t *dest,
+    size_t row,
+    size_t dest_row
+) {
+    int src_len = src->rows.dense.count;
+    int dest_len = dest->rows.dense.count;
     ecs_vec_t *dest_rows = dest->rows.dense.data;
     ecs_vec_t *src_rows = src->rows.dense.data;
 
     ecs_entity_t *src_type = src->type.data;
     ecs_entity_t *dest_type = dest->type.data;
 
-    for (int src_i = 0, dest_i = 0; dest_i < len;) {
+    for (int src_i = 0, dest_i = 0; src_i < src_len && dest_i < dest_len;) {
         if (src_type[src_i].value == dest_type[dest_i].value) {
             ecs_vec_copy_element(
                 &src_rows[src_i],
@@ -103,8 +97,10 @@ void ecs_archetype_migrate_right_entity(ecs_archetype_t *src, ecs_archetype_t *d
             );
             src_i++;
             dest_i++;
-        } else {
+        } else if (src_type[src_i].value < dest_type[dest_i].value) {
             src_i++;
+        } else {
+            dest_i++;
         }
     }
 }

@@ -1,4 +1,5 @@
 #include "ecs_query.h"
+#include "ecs_archetype.h"
 #include "ecs_config.h"
 #include "ecs_sparseset.h"
 #include "ecs_types.h"
@@ -9,6 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct {} EcsQueryIdMap;
 
@@ -19,7 +21,7 @@ bool ecs_query_match_type(ecs_query_t *query, ecs_type_t *type) {
     ecs_entity_t *entities = type->data;
     uint32_t tlen = type->count;
 
-    for (uint32_t i = 0; i < query->terms[i].id.value; i++) {
+    for (uint32_t i = 0; query->terms[i].id.value; i++) {
         ecs_query_term_t term = query->terms[i];
         bool matched = false;
 
@@ -60,17 +62,18 @@ static void ecs_query_update_matches(ecs_world_t *world, ecs_query_cache_t *cach
     uint32_t len = world->archetypes.count;
 
     ecs_entity_t select = get_select_query_select(&cache->query);
-
     if (select.value) {
         ecs_vec_t *select_archetypes = ecs_sparseset_get(&world->component_archetypes, select.value);
         if (select_archetypes) {
-            archetypes = select_archetypes->data;
-            len = select_archetypes->count;
+            ecs_archetype_id_t *select_ids = select_archetypes->data;
+            for (uint32_t i = 0; i < select_archetypes->count; i++) {
+                if (ecs_query_match_type(&cache->query, &archetypes[select_ids[i]].type)) {
+                    ecs_vec_push(&cache->archetypes, &select_ids[i]);
+                }
+            }
+            return;
         }
     }
-
-    archetypes = world->archetypes.data;
-    len = world->archetypes.count;
     for (uint32_t i = 0; i < len; i++) {
         if (ecs_query_match_type(&cache->query, &archetypes[i].type)) {
             ecs_vec_push(&cache->archetypes, &i);
@@ -92,6 +95,10 @@ static ecs_query_term_t ecs_query_term_from_dsl(ecs_world_t *world, ecs_dsl_term
 
     result.id = ecs_strmap_get(&world->entity_map, term.id.first);
 
+    if (!result.id.value) {
+        return (ecs_query_term_t) {0};
+    }
+
     if (term.modifier == ECS_DSL_MOD_NONE || term.modifier == ECS_DSL_MOD_OPTIONAL) {
         result.oper = EcsQueryOperEqual;
     } else {
@@ -110,11 +117,13 @@ ecs_query_t *ecs_query_from_str(ecs_world_t *world, const char *str) {
 
     for (uint32_t i = 0; i < dsl_query->count && i < 8; i++) {
         query->terms[i] = ecs_query_term_from_dsl(world, dsl_query->terms[i]);
+        if (!query->terms[i].id.value) {
+            return NULL;
+        }
     }
 
     ecs_dsl_query_free(dsl_query);
     ecs_dsl_parser_free(&parser);
-
     return query;
 }
 
@@ -129,6 +138,21 @@ EcsQueryId ecs_query_register(ecs_world_t *world, ecs_query_t *query) {
     return world->queries.count - 1;
 }
 
+ecs_iter_t ecs_query(ecs_world_t *world, ecs_query_t *query) {
+    static ecs_query_cache_t cache;
+
+    cache.archetypes = ecs_vec_create(sizeof(ecs_archetype_id_t));
+    cache.query = *query;
+
+    ecs_query_update_matches(world, &cache);
+    return (ecs_iter_t) {
+        .world = world,
+        .archetypes = &cache.archetypes,
+        .count = 0,
+        .current_archetype = -1
+    };
+}
+
 ecs_iter_t ecs_query_iter(ecs_world_t *world, EcsQueryId query) {
     ecs_vec_t *archetypes = &ECS_VEC_GET(ecs_query_cache_t, &world->queries, query)->archetypes;
 
@@ -141,9 +165,9 @@ ecs_iter_t ecs_query_iter(ecs_world_t *world, EcsQueryId query) {
 }
 
 bool ecs_iter_next(ecs_iter_t *it) {
-    it->current_archetype++;
+    it->current_archetype += 1;
 
-    if (it->current_archetype >= it->archetypes->count) {
+    if (it->current_archetype >= (int) it->archetypes->count) {
         return false;
     }
 

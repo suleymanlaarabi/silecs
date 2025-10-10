@@ -93,6 +93,15 @@ void ecs_set_component_meta(ecs_world_t *world, ecs_entity_t component, size_t s
     ecs_component_storage_set(&world->component_storage, component, size);
 }
 
+
+ECS_INLINE
+bool ecs_has(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component) {
+    ecs_entity_record_t *record = ecs_world_get_record(world, entity);
+    ecs_archetype_t *archetype = ecs_world_get_archetype(world, record->archetype_id);
+
+    return ecs_archetype_has_component(archetype, component);
+}
+
 ECS_INLINE
 void *ecs_get(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component) {
     ecs_entity_record_t *record = ecs_world_get_record(world, entity);
@@ -116,14 +125,6 @@ ECS_INLINE
 void ecs_insert(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component, void *value) {
     ecs_add(world, entity, component);
     ecs_set(world, entity, component, value);
-}
-
-ECS_INLINE
-bool ecs_has(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component) {
-    ecs_entity_record_t *record = ecs_world_get_record(world, entity);
-    ecs_archetype_t *archetype = ecs_world_get_archetype(world, record->archetype_id);
-
-    return ecs_archetype_has_component(archetype, component);
 }
 
 #define ECS_PAIR 0x0000000000000001

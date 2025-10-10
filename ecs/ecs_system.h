@@ -4,19 +4,18 @@
     #include "ecs_types.h"
     #include <stdlib.h>
     #define ECS_SYSTEM(world, func, phase, ...) \
-        { \
-            ecs_query_t *query = ecs_query_from_str(world, #__VA_ARGS__); \
-            ecs_system(world, func, ecs_id(phase), query); \
-            free(query); \
-        }
+            ecs_query_t *func##query = ecs_query_from_str(world, #__VA_ARGS__); \
+            ecs_entity_t func##System = ecs_system(world, func, ecs_id(phase), func##query); \
+            ecs_add(world, func##System, ecs_id(EcsName)); \
+            const char *func##Name = #func; \
+            ecs_set(world, func##System, ecs_id(EcsName), &func##Name); \
+            free(func##query); \
 
 typedef struct ecs_world_t ecs_world_t;
-
 typedef void (*ecs_iter_func)(ecs_iter_t *it);
 
 typedef struct {
     ecs_iter_func func;
-    EcsQueryId dependsQuery;
 } EcsSystem;
 
 typedef struct {
@@ -40,7 +39,7 @@ ECS_TAG_DECLARE(EcsOnUpdate);
 ECS_TAG_DECLARE(EcsOnPostUpdate);
 
 void EcsSystemModule(ecs_world_t *world);
-void ecs_progress(ecs_world_t *world);
+bool ecs_progress(ecs_world_t *world);
 ecs_entity_t ecs_register_system(ecs_world_t *world, ecs_iter_func func, ecs_query_t *query);
 ecs_entity_t ecs_system(
     ecs_world_t *world,

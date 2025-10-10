@@ -30,8 +30,7 @@ void ecs_archetype_add_singleton(ecs_archetype_t *archetype, ecs_entity_t compon
 uint32_t ecs_archetype_add_entity(ecs_archetype_t *archetype, ecs_entity_t entity);
 ecs_archetype_remove_result_t ecs_archetype_remove_entity(ecs_archetype_t *archetype, size_t row);
 void ecs_archetype_fini(ecs_archetype_t *archetype);
-void ecs_archetype_migrate_same_entity(ecs_archetype_t *src, ecs_archetype_t *dest, size_t row, size_t dest_row);
-void ecs_archetype_migrate_right_entity(ecs_archetype_t *src, ecs_archetype_t *dest, size_t row, size_t dest_row);
+void ecs_archetype_migrate_entity(ecs_archetype_t *src, ecs_archetype_t *dest, size_t row, size_t dest_row);
 
 ECS_INLINE
 void *ecs_archetype_get_component(ecs_archetype_t *archetype, size_t row, ecs_entity_t component) {

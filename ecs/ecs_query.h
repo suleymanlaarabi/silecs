@@ -8,9 +8,9 @@
 
 #define query(...) ((ecs_query_t) __VA_ARGS__)
 #define ecs_field(it, component) ((component *) ((ecs_vec_t *) ecs_sparseset_get(&(it)->archetype_p->rows, ecs_id(component).value))->data)
+#define ecs_it_entity(it, index) *ECS_VEC_GET(ecs_entity_t, &(it)->archetype_p->entities, index)
 
 typedef uint32_t EcsQueryId;
-
 typedef enum {
     EcsQueryOperEqual,
     EcsQueryOperNot,
@@ -31,16 +31,16 @@ typedef struct {
 } ecs_query_t;
 
 typedef struct {
-    ecs_vec_t archetypes;
+    ecs_vec_t archetypes; // ecs_archetype_id
     ecs_query_t query;
 } ecs_query_cache_t;
 
 typedef struct {
     ecs_world_t *world;
-    ecs_vec_t *archetypes;
+    ecs_vec_t *archetypes; // ecs_archetype_id
     ecs_archetype_t *archetype_p;
-    uint32_t current_archetype;
-    uint32_t count;
+    int current_archetype;
+    int count;
 } ecs_iter_t;
 
 ECS_COMPONENT_DECLARE(EcsQueryId);
@@ -48,6 +48,7 @@ ECS_COMPONENT_DECLARE(EcsQueryId);
 bool ecs_query_match_type(ecs_query_t *query, ecs_type_t *type);
 ecs_query_t *ecs_query_from_str(ecs_world_t *world, const char *str);
 EcsQueryId ecs_query_register(ecs_world_t *world, ecs_query_t *query);
+ecs_iter_t ecs_query(ecs_world_t *world, ecs_query_t *query);
 ecs_iter_t ecs_query_iter(ecs_world_t *world, EcsQueryId query);
 bool ecs_iter_next(ecs_iter_t *it);
 void EcsQueryModule(ecs_world_t *world);

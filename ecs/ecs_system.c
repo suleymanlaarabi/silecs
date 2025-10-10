@@ -18,21 +18,10 @@ ecs_entity_t ecs_register_system(ecs_world_t *world, ecs_iter_func func, ecs_que
     ecs_entity_t entity = ecs_new(world);
     EcsQueryId queryId = ecs_query_register(world, query);
 
-    ecs_query_t dependsQuery = query({
-        .terms = {
-            { .id = ecs_make_pair(ecs_id(EcsDependsOn), entity), .oper = EcsQueryOperEqual },
-            { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
-            { .id = ecs_id(EcsQueryId), .oper = EcsQueryOperEqual }
-        },
-    });
-
-    EcsQueryId dependsQueryId = ecs_query_register(world, &dependsQuery);
-
     ecs_add(world, entity, ecs_id(EcsSystem));
     ecs_add(world, entity, ecs_id(EcsQueryId));
     ecs_set(world, entity, ecs_id(EcsSystem), &(EcsSystem) {
         .func = func,
-        .dependsQuery = dependsQueryId
     });
     ecs_set(world, entity, ecs_id(EcsQueryId), &queryId);
     return entity;
@@ -50,12 +39,6 @@ ecs_entity_t ecs_system(
     return system;
 }
 
-ecs_entity_t ecs_register_system_root(ecs_world_t *world, ecs_iter_func func, ecs_query_t *query) {
-    ecs_entity_t entity = ecs_register_system(world, func, query);
-    ecs_add_pair(world, entity, ecs_id(EcsPhase), ecs_new(world));
-    return entity;
-}
-
 void ecs_invoke_system(ecs_world_t *world, EcsSystem *system, EcsQueryId query) {
     ecs_iter_t it = ecs_query_iter(world, query);
 
@@ -70,20 +53,20 @@ void ecs_invoke_systems(ecs_world_t *world, EcsQueryId query) {
         EcsSystem *systems = ecs_field(&it, EcsSystem);
         EcsQueryId *queryIds = ecs_field(&it, EcsQueryId);
 
-        for (uint32_t i = 0; i < it.count; i++) {
+        for (int i = 0; i < it.count; i++) {
             ecs_invoke_system(world,
                 &systems[i],
                 queryIds[i]
             );
-            ecs_invoke_systems(world, systems[i].dependsQuery);
         }
     }
 }
 
-void ecs_progress(ecs_world_t *world) {
+bool ecs_progress(ecs_world_t *world) {
     ecs_invoke_systems(world, world->OnPreUpdateQuery);
     ecs_invoke_systems(world, world->OnUpdateQuery);
     ecs_invoke_systems(world, world->OnPostUpdateQuery);
+    return true;
 }
 
 void EcsSystemModule(ecs_world_t *world) {
@@ -96,7 +79,7 @@ void EcsSystemModule(ecs_world_t *world) {
     ECS_TAG_REGISTER(world, EcsOnUpdate);
     ECS_TAG_REGISTER(world, EcsOnPostUpdate);
 
-    ecs_query_t onPreUpdate = query({
+    ecs_query_t onPreUpdateQuery = query({
         .terms = {
             { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsOnPreUpdate)), .oper = EcsQueryOperEqual },
             { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
@@ -104,7 +87,7 @@ void EcsSystemModule(ecs_world_t *world) {
         },
     });
 
-    ecs_query_t onUpdate = query({
+    ecs_query_t onUpdateQuery = query({
         .terms = {
             { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsOnUpdate)), .oper = EcsQueryOperEqual },
             { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
@@ -112,7 +95,7 @@ void EcsSystemModule(ecs_world_t *world) {
         },
     });
 
-    ecs_query_t onPostUpdate = query({
+    ecs_query_t onPostUpdateQuery = query({
         .terms = {
             { .id = ecs_make_pair(ecs_id(EcsPhase), ecs_id(EcsOnPostUpdate)), .oper = EcsQueryOperEqual },
             { .id = ecs_id(EcsSystem), .oper = EcsQueryOperEqual },
@@ -120,7 +103,7 @@ void EcsSystemModule(ecs_world_t *world) {
         },
     });
 
-    world->OnPreUpdateQuery = ecs_query_register(world, &onPreUpdate);
-    world->OnUpdateQuery = ecs_query_register(world, &onUpdate);
-    world->OnPostUpdateQuery = ecs_query_register(world, &onPostUpdate);
+    world->OnPreUpdateQuery = ecs_query_register(world, &onPreUpdateQuery);
+    world->OnUpdateQuery = ecs_query_register(world, &onUpdateQuery);
+    world->OnPostUpdateQuery = ecs_query_register(world, &onPostUpdateQuery);
 }

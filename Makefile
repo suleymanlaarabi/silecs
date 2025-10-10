@@ -4,7 +4,7 @@ CFLAGS   = -Wall -Wextra -O$(OPT) $(shell pkg-config --cflags criterion) \
 INCLUDES = -Iecs/include -Iecs/ -Iecs/world -Iecs/datastructure -Idsl
 LDLIBS   = $(shell pkg-config --libs criterion)
 
-SRC      = $(wildcard *.c ecs/*.c ecs/world/*.c dsl/*.c)
+SRC      = $(wildcard *.c ecs/*.c ecs/world/*.c dsl/*.c ecs/addons/*.c)
 OBJ      = $(patsubst %.c,build/%.o,$(SRC))
 
 BIN      = build/main

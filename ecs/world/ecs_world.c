@@ -36,7 +36,12 @@ ecs_world_t *ecs_init(void) {
 
     ecs_new(world);
 
-    ECS_REGISTER_COMPONENT(world, EcsName);
+    ECS_EcsNameID.entity = ecs_new(world);
+    ecs_set_component_meta(world, ECS_EcsNameID.entity, sizeof(EcsName));
+    ecs_add(world, ECS_EcsNameID.entity, ECS_EcsNameID.entity);
+    char *ECS_EcsNameName = "EcsName";
+    ecs_set(world, ECS_EcsNameID.entity, ECS_EcsNameID.entity, &ECS_EcsNameName);
+
     ecs_init_module(world);
     ECS_IMPORT(world, EcsBootstrapModule);
     ECS_IMPORT(world, EcsQueryModule);
@@ -95,9 +100,12 @@ ecs_archetype_id_t ecs_archetype_create(ecs_world_t *world, ecs_type_t *type) {
         );
 
         ecs_vec_t *component_archetypes = ecs_sparseset_get(&world->component_archetypes, component.value);
-        if (component_archetypes) {
-            ecs_vec_push(component_archetypes, &id);
+        if (!component_archetypes) {
+            ecs_vec_t vec = ecs_vec_create(sizeof(ecs_archetype_id_t));
+            ecs_sparseset_insert(&world->component_archetypes, component.value, &vec);
+            component_archetypes = ecs_sparseset_get(&world->component_archetypes, component.value);
         }
+        ecs_vec_push(component_archetypes, &id);
     }
 
     ecs_query_cache_t *queries = world->queries.data;
@@ -127,7 +135,7 @@ void ecs_remove_entity_from_archetype(
 }
 
 ECS_INLINE
-void ecs_world_migrate_remove_entity(
+void ecs_world_migrate_entity(
     ecs_world_t *world,
     ecs_entity_t entity,
     ecs_entity_record_t *record,
@@ -137,24 +145,7 @@ void ecs_world_migrate_remove_entity(
     size_t new_row = ecs_archetype_add_entity(new_archetype, entity);
     ecs_archetype_t *archetype = ecs_world_get_archetype(world, record->archetype_id);
 
-    ecs_archetype_migrate_right_entity(archetype, new_archetype, record->row, new_row);
-
-    ecs_remove_entity_from_archetype(world, archetype, record, new_archetype_id, new_row);
-}
-
-
-ECS_INLINE
-void ecs_world_migrate_add_entity(
-    ecs_world_t *world,
-    ecs_entity_t entity,
-    ecs_entity_record_t *record,
-    ecs_archetype_id_t new_archetype_id
-) {
-    ecs_archetype_t *new_archetype = ecs_world_get_archetype(world, new_archetype_id);
-    size_t new_row = ecs_archetype_add_entity(new_archetype, entity);
-    ecs_archetype_t *archetype = ecs_world_get_archetype(world, record->archetype_id);
-
-    ecs_archetype_migrate_same_entity(archetype, new_archetype, record->row, new_row);
+    ecs_archetype_migrate_entity(archetype, new_archetype, record->row, new_row);
 
     ecs_remove_entity_from_archetype(world, archetype, record, new_archetype_id, new_row);
 }
@@ -183,7 +174,7 @@ void ecs_add(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component) {
     }
 
 
-    ecs_world_migrate_add_entity(world, entity, record, new_archetype_id);
+    ecs_world_migrate_entity(world, entity, record, new_archetype_id);
 
     ecs_component_record_t *component_record = ecs_component_get_record(world, component);
     if (component_record && component_record->add_hook) {
@@ -224,7 +215,7 @@ void ecs_remove(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component)
         new_archetype_id = *cached_archetype;
     }
 
-    ecs_world_migrate_remove_entity(world, entity, record, new_archetype_id);
+    ecs_world_migrate_entity(world, entity, record, new_archetype_id);
     ecs_component_record_t *component_record = ecs_component_get_record(world, component);
     if (component_record && component_record->remove_hook) {
         component_record->remove_hook(world, entity);

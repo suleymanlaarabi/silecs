@@ -2,6 +2,7 @@
     #define ECS_MODULE_H
     #include "ecs_types.h"
     #define ECS_IMPORT(world, module) ecs_module_register(world, module, #module)
+    #define ECS_MODULE(name) void Ecs##name##yModule(ecs_world_t *world)
 
 typedef struct ecs_world_t ecs_world_t;
 

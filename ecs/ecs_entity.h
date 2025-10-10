@@ -23,5 +23,6 @@ ecs_entity_t ecs_entity_manager_new(ecs_entity_manager_t *manager);
 bool ecs_entity_manager_is_alive(ecs_entity_manager_t *manager, ecs_entity_t e);
 void ecs_entity_manager_kill(ecs_entity_manager_t *manager, uint32_t index);
 void ecs_entity_manager_fini(ecs_entity_manager_t *manager);
+ecs_entity_t ecs_entity_manager_get_entity(ecs_entity_manager_t *manager, uint32_t index);
 
 #endif

@@ -18,6 +18,12 @@ void ecs_entity_manager_fini(ecs_entity_manager_t *manager) {
     ecs_vec_free(&manager->available_entity);
 }
 
+ecs_entity_t ecs_entity_manager_get_entity(ecs_entity_manager_t *manager, uint32_t index) {
+    ecs_entity_t entity = { .index = index, .gen = 0 };
+    entity.gen = *ECS_VEC_GET(uint16_t, &manager->generations, index);
+    return entity;
+}
+
 ecs_entity_t ecs_entity_manager_new(ecs_entity_manager_t *manager) {
     ecs_entity_t entity;
 

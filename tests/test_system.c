@@ -42,7 +42,7 @@ void PosVelSys(ecs_iter_t *it) {
     Position *p = ecs_field(it, Position);
     Velocity *v = ecs_field(it, Velocity);
 
-    for (uint32_t i = 0; i < it->count; i++) {
+    for (int i = 0; i < it->count; i++) {
         p[i].x += v[i].x;
         p[i].y += v[i].y;
     }
@@ -102,7 +102,7 @@ void RelatedPosVelSys(ecs_iter_t *it) {
     Position *p = ecs_field(it, Position);
     Velocity *v = ecs_field(it, Velocity);
 
-    for (uint32_t i = 0; i < it->count; i++) {
+    for (int i = 0; i < it->count; i++) {
         p[i].x += v[i].x;
         p[i].y += v[i].y;
     }

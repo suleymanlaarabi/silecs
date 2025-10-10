@@ -11,4 +11,7 @@ void ecs_print_queryid(ecs_world_t *world, EcsQueryId id);
 
 void ecs_archetype_print(ecs_archetype_t *archetype);
 
+void ecs_print_it(ecs_iter_t *it);
+ecs_type_t *ecs_entity_type(ecs_world_t *world, ecs_entity_t entity);
+
 #endif
