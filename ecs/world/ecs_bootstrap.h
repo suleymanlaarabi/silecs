@@ -4,12 +4,14 @@
 
 typedef struct ecs_world_t ecs_world_t;
 
-typedef struct {
+ECS_TAGS(
+    EcsWildcard,
+    EcsChildOf,
+    EcsComponent
+)
 
-} EcsComponent;
-
-ECS_TAG_DECLARE(EcsWildcard);
-ECS_TAG_DECLARE(EcsChildOf);
+ECS_COMPONENT_DECLARE(EcsWildcard);
+ECS_COMPONENT_DECLARE(EcsChildOf);
 ECS_COMPONENT_DECLARE(EcsComponent);
 
 void EcsBootstrapModule(ecs_world_t *world);

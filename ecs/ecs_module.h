@@ -8,7 +8,7 @@ typedef struct ecs_world_t ecs_world_t;
 
 typedef void (*ecs_module_func)(struct ecs_world_t *world);
 
-ECS_TAG_DECLARE(EcsModule);
+ECS_TAG(EcsModule);
 
 void ecs_init_module(ecs_world_t *world);
 void ecs_module_register(

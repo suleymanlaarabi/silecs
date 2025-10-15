@@ -1,0 +1,318 @@
+#include <criterion/criterion.h>
+#include "../ecs/rayflect/ecs_rayflect.h"
+#include "../ecs/rayflect/rayflect_types.h"
+#include "../ecs/rayflect/ecs_rayflect.h"
+#include "rayflect/rayflect_format.h"
+#include "rayflect/rayflect_parser.h"
+
+#include <string.h>
+#include <stdlib.h>
+
+ECS_STRUCT(TestPosition, {
+    float x;
+    float y;
+});
+
+ECS_STRUCT(TestEntity, {
+    int id;
+    char *name;
+    float health;
+    int inventory[10];
+});
+
+ECS_STRUCT(TestVector3D, {
+    double x;
+    double y;
+    double z;
+});
+
+Test(ecs_rayflect, parse_simple_struct) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { int x; float y; }";
+    rayflect_parse(&ecs_struct, def);
+
+    cr_assert_eq(ecs_struct.fields.count, 2);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->name, "x");
+    cr_assert_eq(field1->size, 4);
+    cr_assert_eq(field1->align, 4);
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->name, "y");
+    cr_assert_eq(field2->size, 4);
+    cr_assert_eq(field2->align, 4);
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, parse_struct_with_pointers) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { char *name; int *data; }";
+    rayflect_parse(&ecs_struct, def);
+
+    cr_assert_eq(ecs_struct.fields.count, 2);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->name, "name");
+    cr_assert_eq(field1->size, sizeof(void*));
+    cr_assert_eq(field1->align, sizeof(void*));
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->name, "data");
+    cr_assert_eq(field2->size, sizeof(void*));
+    cr_assert_eq(field2->align, sizeof(void*));
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, parse_struct_with_arrays) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { int values[10]; char buffer[256]; }";
+    rayflect_parse(&ecs_struct, def);
+
+    cr_assert_eq(ecs_struct.fields.count, 2);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->name, "values");
+    cr_assert_eq(field1->size, 40);
+    cr_assert_eq(field1->align, 4);
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->name, "buffer");
+    cr_assert_eq(field2->size, 256);
+    cr_assert_eq(field2->align, 1);
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, parse_struct_complex) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { struct Vector3 position; float rotation[4]; int *ptr; }";
+    rayflect_parse(&ecs_struct, def);
+
+    cr_assert_eq(ecs_struct.fields.count, 3);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->name, "position");
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->name, "rotation");
+    cr_assert_eq(field2->size, 16);
+    cr_assert_eq(field2->align, 4);
+
+    ecs_field_t *field3 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 2);
+    cr_assert_str_eq(field3->name, "ptr");
+    cr_assert_eq(field3->size, sizeof(void*));
+    cr_assert_eq(field3->align, sizeof(void*));
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, macro_ecs_struct_basic) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    rayflect_parse(&ecs_struct, ecs_rayflect_id(TestPosition));
+
+    cr_assert_eq(ecs_struct.fields.count, 2);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->name, "x");
+    cr_assert_eq(field1->size, 4);
+    cr_assert_eq(field1->align, 4);
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->name, "y");
+    cr_assert_eq(field2->size, 4);
+    cr_assert_eq(field2->align, 4);
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, macro_ecs_struct_complex) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    rayflect_parse(&ecs_struct, ecs_rayflect_id(TestEntity));
+
+    rayflect_print(&ecs_struct);
+
+    cr_assert_eq(ecs_struct.fields.count, 4);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->name, "id");
+    cr_assert_eq(field1->size, 4);
+    cr_assert_eq(field1->align, 4);
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->name, "name");
+    cr_assert_eq(field2->size, sizeof(void*));
+    cr_assert_eq(field2->align, sizeof(void*));
+
+    ecs_field_t *field3 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 2);
+    cr_assert_str_eq(field3->name, "health");
+    cr_assert_eq(field3->size, 4);
+    cr_assert_eq(field3->align, 4);
+
+    ecs_field_t *field4 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 3);
+    cr_assert_str_eq(field4->name, "inventory");
+    cr_assert_eq(field4->size, 40);
+    cr_assert_eq(field4->align, 4);
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, macro_ecs_struct_with_print) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    rayflect_parse(&ecs_struct, ecs_rayflect_id(TestVector3D));
+
+    rayflect_print(&ecs_struct);
+
+    cr_assert_eq(ecs_struct.fields.count, 3);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_eq(field1->size, 8);
+    cr_assert_eq(field1->align, 8);
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, format_struct_basic) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { int x; float y; }";
+    rayflect_parse(&ecs_struct, def);
+
+    ecs_string_t formatted = ecs_rayflect_format_struct(&ecs_struct, NULL);
+
+    cr_assert_not_null(formatted.data);
+    cr_assert_str_eq((char *)formatted.data, "{ x: i32, y: f32 }");
+
+    ecs_vec_free(&formatted);
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, format_struct_with_name) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    rayflect_parse(&ecs_struct, ecs_rayflect_id(TestPosition));
+
+    ecs_string_t formatted = ecs_rayflect_format_struct(&ecs_struct, "Position");
+
+    cr_assert_not_null(formatted.data);
+    cr_assert_str_eq((char *)formatted.data, "Position { x: f32, y: f32 }");
+
+    ecs_vec_free(&formatted);
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, format_struct_complex) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    rayflect_parse(&ecs_struct, ecs_rayflect_id(TestEntity));
+
+    ecs_string_t formatted = ecs_rayflect_format_struct(&ecs_struct, "Entity");
+
+    cr_assert_not_null(formatted.data);
+    const char *expected = "Entity { id: i32, name: ptr, health: f32, inventory: array[10] }";
+    cr_assert_str_eq((char *)formatted.data, expected);
+
+    ecs_vec_free(&formatted);
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, user_example_multiline) {
+    ECS_STRUCT(TestMultiline, {
+        float x;
+        float y;
+    });
+
+    TestMultiline unused;
+    (void) unused;
+
+    ecs_struct_t my_struct = {0};
+    ecs_vec_init(&my_struct.fields, sizeof(ecs_field_t));
+
+    rayflect_parse(&my_struct, ecs_rayflect_id(TestMultiline));
+    rayflect_print(&my_struct);
+
+    cr_assert_eq(my_struct.fields.count, 2);
+
+    rayflect_free(&my_struct);
+}
+
+Test(ecs_rayflect, type_sizes_and_alignment) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { char c; short s; int i; long l; float f; double d; }";
+    rayflect_parse(&ecs_struct, def);
+
+    cr_assert_eq(ecs_struct.fields.count, 6);
+
+    ecs_field_t *char_field = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_eq(char_field->size, 1);
+    cr_assert_eq(char_field->align, 1);
+    cr_assert_str_eq(char_field->simple_type, "i8");
+
+    ecs_field_t *short_field = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_eq(short_field->size, 2);
+    cr_assert_eq(short_field->align, 2);
+    cr_assert_str_eq(short_field->simple_type, "i16");
+
+    ecs_field_t *int_field = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 2);
+    cr_assert_eq(int_field->size, 4);
+    cr_assert_eq(int_field->align, 4);
+    cr_assert_str_eq(int_field->simple_type, "i32");
+
+    ecs_field_t *float_field = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 4);
+    cr_assert_eq(float_field->size, 4);
+    cr_assert_eq(float_field->align, 4);
+    cr_assert_str_eq(float_field->simple_type, "f32");
+
+    ecs_field_t *double_field = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 5);
+    cr_assert_eq(double_field->size, 8);
+    cr_assert_eq(double_field->align, 8);
+    cr_assert_str_eq(double_field->simple_type, "f64");
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, simple_types_display) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { int id; float *position; double values[5]; char name; }";
+    rayflect_parse(&ecs_struct, def);
+    rayflect_print(&ecs_struct);
+
+    cr_assert_eq(ecs_struct.fields.count, 4);
+
+    ecs_field_t *field1 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 0);
+    cr_assert_str_eq(field1->simple_type, "i32");
+
+    ecs_field_t *field2 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 1);
+    cr_assert_str_eq(field2->simple_type, "ptr");
+
+    ecs_field_t *field3 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 2);
+    cr_assert_str_eq(field3->simple_type, "array[5]");
+
+    ecs_field_t *field4 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 3);
+    cr_assert_str_eq(field4->simple_type, "i8");
+
+    rayflect_free(&ecs_struct);
+}

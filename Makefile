@@ -1,10 +1,10 @@
 CC       = gcc
 CFLAGS   = -Wall -Wextra -O$(OPT) $(shell pkg-config --cflags criterion) \
            -Wno-missing-field-initializers
-INCLUDES = -Iecs/include -Iecs/ -Iecs/world -Iecs/datastructure -Idsl
+INCLUDES = -Iecs/include -Iecs/ -Iecs/world -Iecs/datastructure -Iecs/addons -I/ecs/parsing -Idsl
 LDLIBS   = $(shell pkg-config --libs criterion)
 
-SRC      = $(wildcard *.c ecs/*.c ecs/world/*.c dsl/*.c ecs/addons/*.c)
+SRC      = $(wildcard *.c ecs/*.c ecs/world/*.c dsl/*.c ecs/addons/*.c ecs/parsing/*.c ecs/datastructure/*.c ecs/rayflect/*.c)
 OBJ      = $(patsubst %.c,build/%.o,$(SRC))
 
 BIN      = build/main

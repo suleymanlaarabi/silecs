@@ -47,6 +47,9 @@ ecs_entity_t ecs_entity_manager_new(ecs_entity_manager_t *manager) {
 }
 
 bool ecs_entity_manager_is_alive(ecs_entity_manager_t *manager, ecs_entity_t e) {
+    if (e.index >= manager->generations.count) {
+        return false;
+    }
     return e.gen == *ECS_VEC_GET(uint16_t, &manager->generations, e.index);
 }
 

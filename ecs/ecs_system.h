@@ -18,25 +18,22 @@ typedef struct {
     ecs_iter_func func;
 } EcsSystem;
 
-typedef struct {
-
-} EcsPhase;
-
-typedef struct {
-
-} EcsDependsOn;
-
-typedef struct {
-
-} EcsEnables;
+ECS_TAGS(
+    EcsPhase,
+    EcsDependsOn,
+    EcsEnables,
+    EcsOnPreUpdate,
+    EcsOnUpdate,
+    EcsOnPostUpdate
+);
 
 ECS_COMPONENT_DECLARE(EcsDependsOn);
 ECS_COMPONENT_DECLARE(EcsEnables);
 ECS_COMPONENT_DECLARE(EcsSystem);
 ECS_COMPONENT_DECLARE(EcsPhase);
-ECS_TAG_DECLARE(EcsOnPreUpdate);
-ECS_TAG_DECLARE(EcsOnUpdate);
-ECS_TAG_DECLARE(EcsOnPostUpdate);
+ECS_COMPONENT_DECLARE(EcsOnPreUpdate);
+ECS_COMPONENT_DECLARE(EcsOnUpdate);
+ECS_COMPONENT_DECLARE(EcsOnPostUpdate);
 
 void EcsSystemModule(ecs_world_t *world);
 bool ecs_progress(ecs_world_t *world);

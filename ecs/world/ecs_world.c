@@ -5,6 +5,7 @@
 #include "ecs_entity.h"
 #include "ecs_map.h"
 #include "ecs_query.h"
+#include "../rayflect/ecs_rayflect.h"
 #include "ecs_sparseset.h"
 #include "ecs_strmap.h"
 #include "ecs_system.h"
@@ -43,6 +44,7 @@ ecs_world_t *ecs_init(void) {
     ecs_set(world, ECS_EcsNameID.entity, ECS_EcsNameID.entity, &ECS_EcsNameName);
 
     ecs_init_module(world);
+    ECS_IMPORT(world, EcsRayflectModule);
     ECS_IMPORT(world, EcsBootstrapModule);
     ECS_IMPORT(world, EcsQueryModule);
     ECS_IMPORT(world, EcsSystemModule);

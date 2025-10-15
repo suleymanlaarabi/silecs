@@ -1,26 +1,27 @@
-#include "ecs_query.h"
-#include "ecs_system.h"
 #include "ecs_types.h"
 #include "ecs_world.h"
+#include "ecs_system.h"
 #include "test.h"
 #include <criterion/criterion.h>
 #include <stdint.h>
 #include <stdio.h>
 
 static int medium_count = 0;
+
 void medium_system(ecs_iter_t *it) {
     medium_count += it->count;
 }
 
-ECS_TAG_DEFINE(SysEnemy);
-ECS_TAG_DEFINE(SysPlayer);
+typedef struct {} SysEnemy;
+typedef struct {} SysPlayer;
+
+ECS_COMPONENT_DEFINE(SysEnemy);
+ECS_COMPONENT_DEFINE(SysPlayer);
 
 Test(system, medium) {
     ecs_world_t *world = ecs_init();
-
-    ECS_TAG_REGISTER(world, SysEnemy);
-    ECS_TAG_REGISTER(world, SysPlayer);
-
+    ECS_REGISTER_COMPONENT(world, SysEnemy);
+    ECS_REGISTER_COMPONENT(world, SysPlayer);
     ECS_SYSTEM(world, medium_system, EcsOnUpdate, SysEnemy, !SysPlayer);
 
     ecs_entity_t enemy = ecs_new(world);
@@ -50,7 +51,6 @@ void PosVelSys(ecs_iter_t *it) {
 
 Test(system, pos_vel) {
     ecs_world_t *world = ecs_init();
-
     ECS_REGISTER_COMPONENT(world, Position);
     ECS_REGISTER_COMPONENT(world, Velocity);
 
@@ -64,18 +64,17 @@ Test(system, pos_vel) {
     ECS_SYSTEM(world, PosVelSys, EcsOnUpdate, Position, Velocity);
 
     Position *pos = ecs_get(world, player, ecs_id(Position));
-
     cr_assert_eq(pos->x, 0);
     cr_assert_eq(pos->y, 0);
+
     ecs_progress(world);
+
     cr_assert_eq(pos->x, 1);
     cr_assert_eq(pos->y, 1);
 }
 
-
 Test(system, killed) {
     ecs_world_t *world = ecs_init();
-
     ECS_REGISTER_COMPONENT(world, Position);
     ECS_REGISTER_COMPONENT(world, Velocity);
 
@@ -89,11 +88,12 @@ Test(system, killed) {
     ECS_SYSTEM(world, PosVelSys, EcsOnUpdate, Position, Velocity);
 
     Position *pos = ecs_get(world, player, ecs_id(Position));
-
     cr_assert_eq(pos->x, 0);
     cr_assert_eq(pos->y, 0);
+
     ecs_kill(world, player);
     ecs_progress(world);
+
     cr_assert_eq(pos->x, 0);
     cr_assert_eq(pos->y, 0);
 }
@@ -110,7 +110,6 @@ void RelatedPosVelSys(ecs_iter_t *it) {
 
 Test(system, relation) {
     ecs_world_t *world = ecs_init();
-
     ECS_REGISTER_COMPONENT(world, Position);
     ECS_REGISTER_COMPONENT(world, Velocity);
     ECS_REGISTER_COMPONENT(world, MainScene);
@@ -130,14 +129,12 @@ Test(system, relation) {
 
     ecs_progress(world);
     pos = ecs_get(world, player, ecs_id(Position));
-
     cr_assert_eq(pos->x, 0);
     cr_assert_eq(pos->y, 0);
-    ecs_add_pair(world, player, ecs_id(EcsChildOf), ecs_id(MainScene));
 
+    ecs_add_pair(world, player, ecs_id(EcsChildOf), ecs_id(MainScene));
     ecs_progress(world);
     pos = ecs_get(world, player, ecs_id(Position));
-
     cr_assert_eq(pos->x, 1);
     cr_assert_eq(pos->y, 1);
 }

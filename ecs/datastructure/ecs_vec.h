@@ -1,8 +1,8 @@
 #ifndef ECS_VEC_H
     #define ECS_VEC_H
-
     #include <stddef.h>
     #include <stddef.h>
+    #include <stdint.h>
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
@@ -58,6 +58,18 @@ void *ecs_vec_push(ecs_vec_t *v, const void *elem) {
     memcpy(dest, elem, v->size);
     v->count++;
     return dest;
+}
+
+ECS_INLINE
+void ecs_vec_push_batch(ecs_vec_t *v, const void *elem, uint32_t count) {
+    if (ECS_UNLIKELY(v->count + count > v->capacity)) {
+        size_t new_capacity = (v->capacity ? v->capacity * 3 : 16) + count;
+        v->data = realloc(v->data, new_capacity * v->size);
+        v->capacity = new_capacity;
+    }
+    void *dest = (char *)v->data + v->count * v->size;
+    memcpy(dest, elem, count * v->size);
+    v->count += count;
 }
 
 ECS_INLINE

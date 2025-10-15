@@ -172,7 +172,7 @@ Test(relation, wildcard) {
     ecs_world_t *world = ecs_init();
     ECS_REGISTER_COMPONENT(world, Position);
     ECS_REGISTER_COMPONENT(world, Health);
-    ECS_TAG_REGISTER(world, MainScene);
+    ECS_REGISTER_COMPONENT(world, MainScene);
 
     ecs_entity_t player = ecs_new(world);
 

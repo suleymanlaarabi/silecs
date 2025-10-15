@@ -1,7 +1,9 @@
 #include "ecs_debug.h"
 #include "ecs_query.h"
 #include "ecs_world.h"
+#include "rayflect/rayflect_format.h"
 #include "stdio_devtool.h"
+#include <rayflect/ecs_rayflect.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -105,6 +107,22 @@ static bool cmd_set_name(ecs_world_t *world, const char *args)
     return true;
 }
 
+static bool cmd_print_component(ecs_world_t *world, const char *args)
+{
+    ecs_entity_t component = ecs_lookup(world, args);
+    if (component.value != 0 && ecs_is_alive(world, component)) {
+        if (!ecs_has(world, component, ecs_id(EcsStruct))) {
+            printf("Component is not reflected\n");
+            return true;
+        }
+        EcsStruct *component_struct = ecs_get(world, component, ecs_id(EcsStruct));
+        rayflect_print(component_struct);
+    } else {
+        printf("Component not found\n");
+    }
+    return true;
+}
+
 static bool cmd_help(ecs_world_t *world, const char *args);
 
 static const command_entry_t commands[] = {
@@ -116,6 +134,7 @@ static const command_entry_t commands[] = {
     { "exit", 4, cmd_exit, "exit" },
     { "new", 3, cmd_new, "new <name> [components...]" },
     { "set_name", 8, cmd_set_name, "set_name <entity_index> <name>" },
+    { "rayflect", 8, cmd_print_component, "print_component <entity_index> <component>" },
     { "help", 4, cmd_help, "help" },
     { NULL, 0, NULL, NULL }
 };

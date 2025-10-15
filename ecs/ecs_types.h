@@ -19,12 +19,21 @@
             .name = #component \
         };
 
-    #define ECS_TAG_DEFINE(tag) \
-        ecs_component_desc_t ECS_##tag##ID = { \
-            .size = 0, \
-            .entity = {0}, \
-            .name = #tag \
-        };
+    #define ECS_TAG(name) typedef struct {} name;
+
+    #define ECS_TAG1 ECS_TAG
+    #define ECS_TAG2(one, two) ECS_TAG(one); ECS_TAG(two);
+    #define ECS_TAG3(one, two, three) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three);
+    #define ECS_TAG4(one, two, three, four) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four);
+    #define ECS_TAG5(one, two, three, four, five) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four); ECS_TAG(five);
+    #define ECS_TAG6(one, two, three, four, five, six) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four); ECS_TAG(five); ECS_TAG(six);
+    #define ECS_TAG7(one, two, three, four, five, six, seven) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four); ECS_TAG(five); ECS_TAG(six); ECS_TAG(seven);
+    #define ECS_TAG8(one, two, three, four, five, six, seven, eight) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four); ECS_TAG(five); ECS_TAG(six); ECS_TAG(seven); ECS_TAG(eight);
+    #define ECS_TAG9(one, two, three, four, five, six, seven, eight, nine) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four); ECS_TAG(five); ECS_TAG(six); ECS_TAG(seven); ECS_TAG(eight); ECS_TAG(nine);
+    #define ECS_TAG10(one, two, three, four, five, six, seven, eight, nine, ten) ECS_TAG(one); ECS_TAG(two); ECS_TAG(three); ECS_TAG(four); ECS_TAG(five); ECS_TAG(six); ECS_TAG(seven); ECS_TAG(eight); ECS_TAG(nine); ECS_TAG(ten);
+
+    #define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,NAME,...) NAME
+    #define ECS_TAGS(...) GET_MACRO(__VA_ARGS__, ECS_TAG10, ECS_TAG9, ECS_TAG8, ECS_TAG7, ECS_TAG6, ECS_TAG5, ECS_TAG4, ECS_TAG3, ECS_TAG2, ECS_TAG1)(__VA_ARGS__)
 
     #define _ecs_id_name(component) \
         ECS_##component##ID
@@ -37,19 +46,8 @@
         ecs_set(world, ecs_id(component), ecs_id(EcsName), &ECS_##component##Name); \
         ecs_add(world, ecs_id(component), ecs_id(EcsComponent));
 
-
-    #define ECS_TAG_REGISTER(world, tag) \
-        _ecs_id_name(tag).entity = ecs_new(world);  \
-        ecs_add(world, ecs_id(tag), ecs_id(EcsName)); \
-        char *ECS_##tag##Name = #tag; \
-        ecs_set(world, ecs_id(tag), ecs_id(EcsName), &ECS_##tag##Name); \
-        ecs_add(world, ecs_id(tag), ecs_id(EcsComponent));
-
     #define ECS_COMPONENT_DECLARE(component) \
         extern ecs_component_desc_t ECS_##component##ID;
-
-    #define ECS_TAG_DECLARE(tag) \
-        extern ecs_component_desc_t ECS_##tag##ID;
 
     #define ecs_id(component) ECS_##component##ID.entity
     #define ecs_relation ecs_make_pair

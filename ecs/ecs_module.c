@@ -2,11 +2,10 @@
 #include <ecs_module.h>
 #include <ecs_world.h>
 
-
-ECS_TAG_DEFINE(EcsModule);
+ECS_COMPONENT_DEFINE(EcsModule);
 
 void ecs_init_module(ecs_world_t *world) {
-    ECS_TAG_REGISTER(world, EcsModule);
+    ECS_REGISTER_COMPONENT(world, EcsModule);
 }
 
 void ecs_module_register(

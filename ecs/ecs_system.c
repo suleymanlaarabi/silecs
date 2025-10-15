@@ -10,9 +10,9 @@ ECS_COMPONENT_DEFINE(EcsSystem);
 ECS_COMPONENT_DEFINE(EcsDependsOn);
 ECS_COMPONENT_DEFINE(EcsEnables);
 ECS_COMPONENT_DEFINE(EcsPhase);
-ECS_TAG_DEFINE(EcsOnPreUpdate);
-ECS_TAG_DEFINE(EcsOnUpdate);
-ECS_TAG_DEFINE(EcsOnPostUpdate);
+ECS_COMPONENT_DEFINE(EcsOnPreUpdate);
+ECS_COMPONENT_DEFINE(EcsOnUpdate);
+ECS_COMPONENT_DEFINE(EcsOnPostUpdate);
 
 ecs_entity_t ecs_register_system(ecs_world_t *world, ecs_iter_func func, ecs_query_t *query) {
     ecs_entity_t entity = ecs_new(world);
@@ -75,9 +75,9 @@ void EcsSystemModule(ecs_world_t *world) {
     ECS_REGISTER_COMPONENT(world, EcsEnables);
     ECS_REGISTER_COMPONENT(world, EcsPhase);
 
-    ECS_TAG_REGISTER(world, EcsOnPreUpdate);
-    ECS_TAG_REGISTER(world, EcsOnUpdate);
-    ECS_TAG_REGISTER(world, EcsOnPostUpdate);
+    ECS_REGISTER_COMPONENT(world, EcsOnPreUpdate);
+    ECS_REGISTER_COMPONENT(world, EcsOnUpdate);
+    ECS_REGISTER_COMPONENT(world, EcsOnPostUpdate);
 
     ecs_query_t onPreUpdateQuery = query({
         .terms = {

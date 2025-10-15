@@ -4,8 +4,8 @@
 #include <ecs_world.h>
 #include <stdio.h>
 
-ECS_TAG_DEFINE(EcsWildcard);
-ECS_TAG_DEFINE(EcsChildOf);
+ECS_COMPONENT_DEFINE(EcsWildcard);
+ECS_COMPONENT_DEFINE(EcsChildOf);
 ECS_COMPONENT_DEFINE(EcsComponent);
 
 void OnAddName(ecs_world_t *world, ecs_entity_t entity) {
@@ -20,8 +20,8 @@ void EcsBootstrapModule(ecs_world_t *world) {
     ECS_REGISTER_COMPONENT(world, EcsComponent);
     ecs_add(world, ecs_id(EcsName), ecs_id(EcsComponent));
 
-    ECS_TAG_REGISTER(world, EcsWildcard);
-    ECS_TAG_REGISTER(world, EcsChildOf);
+    ECS_REGISTER_COMPONENT(world, EcsWildcard);
+    ECS_REGISTER_COMPONENT(world, EcsChildOf);
 
     const char *ChildOfName = "ChildOf";
     const char *EcsName = "EcsName";
