@@ -4,7 +4,7 @@
 #include "rayflect_types.h"
 #include "../datastructure/ecs_string.h"
 
-void rayflect_print(const ecs_struct_t *ecs_struct);
+void rayflect_print(const ecs_struct_t *ecs_struct, const void *data);
 ecs_string_t rayflect_format(const ecs_struct_t *ecs_struct, const char *struct_name);
 
 #endif

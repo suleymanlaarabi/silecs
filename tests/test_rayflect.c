@@ -144,7 +144,7 @@ Test(ecs_rayflect, macro_ecs_struct_complex) {
 
     rayflect_parse(&ecs_struct, ecs_rayflect_id(TestEntity));
 
-    rayflect_print(&ecs_struct);
+    rayflect_print(&ecs_struct, NULL);
 
     cr_assert_eq(ecs_struct.fields.count, 4);
 
@@ -177,7 +177,7 @@ Test(ecs_rayflect, macro_ecs_struct_with_print) {
 
     rayflect_parse(&ecs_struct, ecs_rayflect_id(TestVector3D));
 
-    rayflect_print(&ecs_struct);
+    rayflect_print(&ecs_struct, NULL);
 
     cr_assert_eq(ecs_struct.fields.count, 3);
 
@@ -248,7 +248,7 @@ Test(ecs_rayflect, user_example_multiline) {
     ecs_vec_init(&my_struct.fields, sizeof(ecs_field_t));
 
     rayflect_parse(&my_struct, ecs_rayflect_id(TestMultiline));
-    rayflect_print(&my_struct);
+    rayflect_print(&my_struct, NULL);
 
     cr_assert_eq(my_struct.fields.count, 2);
 
@@ -298,7 +298,7 @@ Test(ecs_rayflect, simple_types_display) {
 
     const char *def = "struct { int id; float *position; double values[5]; char name; }";
     rayflect_parse(&ecs_struct, def);
-    rayflect_print(&ecs_struct);
+    rayflect_print(&ecs_struct, NULL);
 
     cr_assert_eq(ecs_struct.fields.count, 4);
 
@@ -313,6 +313,21 @@ Test(ecs_rayflect, simple_types_display) {
 
     ecs_field_t *field4 = ECS_VEC_GET(ecs_field_t, &ecs_struct.fields, 3);
     cr_assert_str_eq(field4->simple_type, "i8");
+
+    rayflect_free(&ecs_struct);
+}
+
+Test(ecs_rayflect, print_with_data) {
+    ecs_struct_t ecs_struct = {0};
+    ecs_vec_init(&ecs_struct.fields, sizeof(ecs_field_t));
+
+    const char *def = "struct { int x; float y; }";
+    rayflect_parse(&ecs_struct, def);
+
+    struct { int x; float y; } test_data = { 42, 3.14f };
+
+    printf("\nTest: printing struct with values:\n");
+    rayflect_print(&ecs_struct, &test_data);
 
     rayflect_free(&ecs_struct);
 }

@@ -3,10 +3,7 @@
 #include "ecs_query.h"
 #include "ecs_system.h"
 #include "ecs_types.h"
-#include "ecs_vec.h"
 #include "rayflect/ecs_rayflect.h"
-#include "rayflect/rayflect_parser.h"
-#include "rayflect/rayflect_types.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -14,11 +11,11 @@
 #include <ecs_world.h>
 #include <string.h>
 
-typedef struct {
-    int x, y;
-} Velocity;
-
 ECS_STRUCT(Position, {
+    float x;
+    float y;
+});
+ECS_STRUCT(Velocity, {
     float x;
     float y;
 });
@@ -59,6 +56,7 @@ void onUpdate(ecs_iter_t *_) {
 void onPostUpdate(ecs_iter_t *_) {
     puts("on post update");
 }
+
 int main() {
     ecs_world_t *world = ecs_init();
 
@@ -68,12 +66,8 @@ int main() {
     ECS_REGISTER_COMPONENT(world, Velocity);
     ECS_REGISTER_COMPONENT(world, MainScene);
 
-    ecs_struct_t pos_struct;
-    ecs_vec_init(&pos_struct.fields, sizeof(ecs_field_t));
-    rayflect_parse(&pos_struct, ecs_rayflect_id(Position));
-
-    ecs_add(world, ecs_id(Position), ecs_id(EcsStruct));
-    ecs_set(world, ecs_id(Position), ecs_id(EcsStruct), &pos_struct);
+    ECS_REGISTER_REFLECTION(world, Position);
+    ECS_REGISTER_REFLECTION(world, Velocity);
 
     ECS_SYSTEM(world, onPostUpdate, EcsOnPostUpdate, Position, Velocity);
     ECS_SYSTEM(world, onPreUpdate, EcsOnPreUpdate, Position, Velocity);
