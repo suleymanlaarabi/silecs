@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 size_t rayflect_type_size(const char *type_str)
 {
@@ -71,58 +72,90 @@ size_t rayflect_type_align(const char *type_str)
     return 0;
 }
 
-char* rayflect_type_simplify(const char *c_type)
+ecs_simple_type_t rayflect_type_simplify(const char *c_type, int *out_array_size)
 {
-    if (!c_type) return strdup("unknown");
+    if (out_array_size) *out_array_size = 0;
     
-    if (strcmp(c_type, "int") == 0) return strdup("i32");
-    if (strcmp(c_type, "unsigned int") == 0) return strdup("u32");
-    if (strcmp(c_type, "short") == 0) return strdup("i16");
-    if (strcmp(c_type, "unsigned short") == 0) return strdup("u16");
-    if (strcmp(c_type, "long") == 0) return strdup("i64");
-    if (strcmp(c_type, "unsigned long") == 0) return strdup("u64");
-    if (strcmp(c_type, "char") == 0) return strdup("i8");
-    if (strcmp(c_type, "unsigned char") == 0) return strdup("u8");
-    if (strcmp(c_type, "float") == 0) return strdup("f32");
-    if (strcmp(c_type, "double") == 0) return strdup("f64");
-    if (strcmp(c_type, "bool") == 0) return strdup("bool");
-    if (strcmp(c_type, "_Bool") == 0) return strdup("bool");
+    if (!c_type) return ECS_TYPE_UNKNOWN;
     
-    if (strstr(c_type, "*")) return strdup("ptr");
+    if (strcmp(c_type, "int") == 0) return ECS_TYPE_I32;
+    if (strcmp(c_type, "unsigned int") == 0) return ECS_TYPE_U32;
+    if (strcmp(c_type, "short") == 0) return ECS_TYPE_I16;
+    if (strcmp(c_type, "unsigned short") == 0) return ECS_TYPE_U16;
+    if (strcmp(c_type, "long") == 0) return ECS_TYPE_I64;
+    if (strcmp(c_type, "unsigned long") == 0) return ECS_TYPE_U64;
+    if (strcmp(c_type, "char") == 0) return ECS_TYPE_I8;
+    if (strcmp(c_type, "unsigned char") == 0) return ECS_TYPE_U8;
+    if (strcmp(c_type, "float") == 0) return ECS_TYPE_F32;
+    if (strcmp(c_type, "double") == 0) return ECS_TYPE_F64;
+    if (strcmp(c_type, "bool") == 0) return ECS_TYPE_BOOL;
+    if (strcmp(c_type, "_Bool") == 0) return ECS_TYPE_BOOL;
+    
+    if (strstr(c_type, "*")) return ECS_TYPE_PTR;
     
     if (strstr(c_type, "[")) {
         char *bracket = strchr(c_type, '[');
-        if (bracket) {
-            int array_size = atoi(bracket + 1);
-            char result[64];
-            snprintf(result, sizeof(result), "array[%d]", array_size);
-            return strdup(result);
+        if (bracket && out_array_size) {
+            *out_array_size = atoi(bracket + 1);
         }
-        return strdup("array");
+        return ECS_TYPE_ARRAY;
     }
     
-    return strdup(c_type);
+    return ECS_TYPE_CUSTOM;
 }
 
-const char* rayflect_type_simplify_static(const char *c_type)
+const char* rayflect_type_to_string(ecs_simple_type_t type, int array_size)
 {
-    if (!c_type) return "unknown";
+    static char array_buf[64];
     
-    if (strcmp(c_type, "int") == 0) return "i32";
-    if (strcmp(c_type, "unsigned int") == 0) return "u32";
-    if (strcmp(c_type, "short") == 0) return "i16";
-    if (strcmp(c_type, "unsigned short") == 0) return "u16";
-    if (strcmp(c_type, "long") == 0) return "i64";
-    if (strcmp(c_type, "unsigned long") == 0) return "u64";
-    if (strcmp(c_type, "char") == 0) return "i8";
-    if (strcmp(c_type, "unsigned char") == 0) return "u8";
-    if (strcmp(c_type, "float") == 0) return "f32";
-    if (strcmp(c_type, "double") == 0) return "f64";
-    if (strcmp(c_type, "bool") == 0) return "bool";
-    if (strcmp(c_type, "_Bool") == 0) return "bool";
-    
-    if (strstr(c_type, "*")) return "ptr";
-    if (strstr(c_type, "[")) return "array";
-    
-    return c_type;
+    switch (type) {
+        case ECS_TYPE_I8:   return "i8";
+        case ECS_TYPE_I16:  return "i16";
+        case ECS_TYPE_I32:  return "i32";
+        case ECS_TYPE_I64:  return "i64";
+        case ECS_TYPE_U8:   return "u8";
+        case ECS_TYPE_U16:  return "u16";
+        case ECS_TYPE_U32:  return "u32";
+        case ECS_TYPE_U64:  return "u64";
+        case ECS_TYPE_F32:  return "f32";
+        case ECS_TYPE_F64:  return "f64";
+        case ECS_TYPE_BOOL: return "bool";
+        case ECS_TYPE_PTR:  return "ptr";
+        case ECS_TYPE_ARRAY:
+            if (array_size > 0) {
+                snprintf(array_buf, sizeof(array_buf), "array[%d]", array_size);
+                return array_buf;
+            }
+            return "array";
+        case ECS_TYPE_CUSTOM: return "custom";
+        case ECS_TYPE_UNKNOWN:
+        default:
+            return "unknown";
+    }
+}
+
+int rayflect_set_field(const ecs_struct_t *ecs_struct, void *instance, const char *field_name, const void *value)
+{
+    if (!ecs_struct || !instance || !field_name || !value) {
+        return -1;
+    }
+
+    size_t offset = 0;
+    for (size_t i = 0; i < ecs_struct->fields.count; i++) {
+        const ecs_field_t *field = ECS_VEC_GET(ecs_field_t, &ecs_struct->fields, i);
+        
+        if (field->align > 0 && offset % field->align != 0) {
+            offset += field->align - (offset % field->align);
+        }
+
+        if (field->name && strcmp(field->name, field_name) == 0) {
+            char *field_ptr = (char *)instance + offset;
+            memcpy(field_ptr, value, field->size);
+            return 0;
+        }
+
+        offset += field->size;
+    }
+
+    return -1;
 }

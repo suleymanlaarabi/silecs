@@ -12,7 +12,7 @@ void rayflect_parse(ecs_struct_t *ecs_struct, const char *def)
 
     ecs_tokenizer_t tokenizer;
     ecs_tokenizer_init(&tokenizer, def);
-    
+
     if (!ecs_tokenizer_tokenize(&tokenizer)) {
         fprintf(stderr, "rayflect: tokenize failed\n");
         ecs_tokenizer_free(&tokenizer);
@@ -48,11 +48,11 @@ void rayflect_parse(ecs_struct_t *ecs_struct, const char *def)
         }
 
         ecs_string_t type_name = ecs_string_new();
-        
+
         while (!ecs_tokenizer_is_done(&tokenizer)) {
             token = ecs_tokenizer_peek(&tokenizer);
             if (!token) break;
-            
+
             if (token->type == ECS_TOKEN_IDENTIFIER) {
                 ecs_token_t *next = ecs_tokenizer_peek_ahead(&tokenizer, 1);
                 if (next && (next->type == ECS_TOKEN_SEMICOLON ||
@@ -109,15 +109,18 @@ void rayflect_parse(ecs_struct_t *ecs_struct, const char *def)
         ecs_string_push(&type_name, '\0');
         ecs_string_push(&field_name, '\0');
 
+        int array_size = 0;
         ecs_field_t field = {
             .name = (const char *)field_name.data,
-            .type = (const char *)type_name.data,
-            .simple_type = rayflect_type_simplify((const char *)type_name.data),
+            .type = rayflect_type_simplify((const char *)type_name.data, &array_size),
+            .array_size = array_size,
             .size = rayflect_type_size((const char *)type_name.data),
             .align = rayflect_type_align((const char *)type_name.data)
         };
 
         ecs_vec_push(&ecs_struct->fields, &field);
+
+        ecs_vec_free(&type_name);
     }
 
     ecs_tokenizer_free(&tokenizer);
@@ -126,13 +129,11 @@ void rayflect_parse(ecs_struct_t *ecs_struct, const char *def)
 void rayflect_free(ecs_struct_t *ecs_struct)
 {
     if (!ecs_struct) return;
-    
+
     for (size_t i = 0; i < ecs_struct->fields.count; i++) {
         ecs_field_t *field = ECS_VEC_GET(ecs_field_t, &ecs_struct->fields, i);
         if (field->name) free((void *)field->name);
-        if (field->type) free((void *)field->type);
-        if (field->simple_type) free((void *)field->simple_type);
     }
-    
+
     ecs_vec_free(&ecs_struct->fields);
 }

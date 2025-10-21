@@ -2,47 +2,67 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 static void print_field_value(const ecs_field_t *field, const void *data, size_t offset)
 {
-    if (!field->simple_type || !data) {
+    if (!data) {
         return;
     }
 
     const char *field_data = (const char *)data + offset;
-    const char *type = field->simple_type;
 
-    if (strcmp(type, "i8") == 0) {
-        printf("%d", *(int8_t *)field_data);
-    } else if (strcmp(type, "i16") == 0) {
-        printf("%d", *(int16_t *)field_data);
-    } else if (strcmp(type, "i32") == 0) {
-        printf("%d", *(int32_t *)field_data);
-    } else if (strcmp(type, "i64") == 0) {
-        printf("%lld", *(long long *)field_data);
-    } else if (strcmp(type, "u8") == 0) {
-        printf("%u", *(uint8_t *)field_data);
-    } else if (strcmp(type, "u16") == 0) {
-        printf("%u", *(uint16_t *)field_data);
-    } else if (strcmp(type, "u32") == 0) {
-        printf("%u", *(uint32_t *)field_data);
-    } else if (strcmp(type, "u64") == 0) {
-        printf("%llu", *(unsigned long long *)field_data);
-    } else if (strcmp(type, "f32") == 0) {
-        printf("%f", *(float *)field_data);
-    } else if (strcmp(type, "f64") == 0) {
-        printf("%f", *(double *)field_data);
-    } else if (strcmp(type, "ptr") == 0) {
-        void *ptr = *(void **)field_data;
-        if (ptr) {
-            printf("%p", ptr);
-        } else {
-            printf("NULL");
+    switch (field->type) {
+        case ECS_TYPE_I8:
+            printf("%d", *(int8_t *)field_data);
+            break;
+        case ECS_TYPE_I16:
+            printf("%d", *(int16_t *)field_data);
+            break;
+        case ECS_TYPE_I32:
+            printf("%d", *(int32_t *)field_data);
+            break;
+        case ECS_TYPE_I64:
+            printf("%lld", *(long long *)field_data);
+            break;
+        case ECS_TYPE_U8:
+            printf("%u", *(uint8_t *)field_data);
+            break;
+        case ECS_TYPE_U16:
+            printf("%u", *(uint16_t *)field_data);
+            break;
+        case ECS_TYPE_U32:
+            printf("%u", *(uint32_t *)field_data);
+            break;
+        case ECS_TYPE_U64:
+            printf("%llu", *(unsigned long long *)field_data);
+            break;
+        case ECS_TYPE_F32:
+            printf("%f", *(float *)field_data);
+            break;
+        case ECS_TYPE_F64:
+            printf("%f", *(double *)field_data);
+            break;
+        case ECS_TYPE_BOOL:
+            printf("%s", *(bool *)field_data ? "true" : "false");
+            break;
+        case ECS_TYPE_PTR: {
+            void *ptr = *(void **)field_data;
+            if (ptr) {
+                printf("%p", ptr);
+            } else {
+                printf("NULL");
+            }
+            break;
         }
-    } else if (strncmp(type, "array[", 6) == 0) {
-        printf("[array]");
-    } else {
-        printf("(unsupported type)");
+        case ECS_TYPE_ARRAY:
+            printf("[array]");
+            break;
+        case ECS_TYPE_CUSTOM:
+        case ECS_TYPE_UNKNOWN:
+        default:
+            printf("(unsupported type)");
+            break;
     }
 }
 
@@ -67,7 +87,7 @@ void rayflect_print(const ecs_struct_t *ecs_struct, const void *data)
         printf("  [%zu] %s: %s",
                i,
                field->name ? field->name : "(null)",
-               field->simple_type ? field->simple_type : "unknown");
+               rayflect_type_to_string(field->type, field->array_size));
 
         if (data) {
             printf(" = ");
@@ -111,12 +131,7 @@ ecs_string_t rayflect_format(const ecs_struct_t *ecs_struct, const char *struct_
 
         ecs_string_push_cstr(&result, field->name);
         ecs_string_push_cstr(&result, ": ");
-
-        if (field->simple_type && field->simple_type[0] != '\0') {
-            ecs_string_push_cstr(&result, field->simple_type);
-        } else {
-            ecs_string_push_cstr(&result, "unknown");
-        }
+        ecs_string_push_cstr(&result, rayflect_type_to_string(field->type, field->array_size));
     }
 
     ecs_string_push_cstr(&result, " }");

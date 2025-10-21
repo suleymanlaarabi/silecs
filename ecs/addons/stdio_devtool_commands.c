@@ -1,10 +1,15 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "ecs_debug.h"
 #include "ecs_world.h"
+#include "stdio_devtool_args.h"
+#include "rayflect/ecs_rayflect.h"
+#include "rayflect/rayflect_types.h"
+#include "parsing/ecs_scanner.h"
 
 #define MAX_COMPONENTS 32
 #define MAX_TOKEN_LEN 256
@@ -170,4 +175,198 @@ void stdio_devtool_command_set_name(ecs_world_t *world, const char *args)
     ecs_set(world, entity, ecs_id(EcsName), &name);
 
     printf("Set name of entity %u to '%s'\n", index, name_buffer);
+}
+
+static bool parse_value_from_string(const char *value_str, ecs_simple_type_t type, void *out_value)
+{
+    if (!value_str || !out_value) return false;
+
+    ecs_scanner_t scanner;
+    ecs_scanner_init(&scanner, value_str);
+    ecs_scanner_skip_whitespace(&scanner);
+
+    switch (type) {
+        case ECS_TYPE_I8:
+        case ECS_TYPE_I16:
+        case ECS_TYPE_I32:
+        case ECS_TYPE_I64: {
+            ecs_string_t num_str = ecs_scanner_take_number(&scanner);
+            if (num_str.count == 0) {
+                ecs_vec_free(&num_str);
+                return false;
+            }
+            ecs_string_push(&num_str, '\0');
+            int64_t val = atoll((const char *)num_str.data);
+            ecs_vec_free(&num_str);
+
+            if (type == ECS_TYPE_I8) *(int8_t *)out_value = (int8_t)val;
+            else if (type == ECS_TYPE_I16) *(int16_t *)out_value = (int16_t)val;
+            else if (type == ECS_TYPE_I32) *(int32_t *)out_value = (int32_t)val;
+            else *(int64_t *)out_value = val;
+            return true;
+        }
+        case ECS_TYPE_U8:
+        case ECS_TYPE_U16:
+        case ECS_TYPE_U32:
+        case ECS_TYPE_U64: {
+            ecs_string_t num_str = ecs_scanner_take_number(&scanner);
+            if (num_str.count == 0) {
+                ecs_vec_free(&num_str);
+                return false;
+            }
+            ecs_string_push(&num_str, '\0');
+            uint64_t val = strtoull((const char *)num_str.data, NULL, 10);
+            ecs_vec_free(&num_str);
+
+            if (type == ECS_TYPE_U8) *(uint8_t *)out_value = (uint8_t)val;
+            else if (type == ECS_TYPE_U16) *(uint16_t *)out_value = (uint16_t)val;
+            else if (type == ECS_TYPE_U32) *(uint32_t *)out_value = (uint32_t)val;
+            else *(uint64_t *)out_value = val;
+            return true;
+        }
+        case ECS_TYPE_F32:
+        case ECS_TYPE_F64: {
+            ecs_string_t num_str = ecs_scanner_take_number(&scanner);
+            if (num_str.count == 0) {
+                ecs_vec_free(&num_str);
+                return false;
+            }
+            ecs_string_push(&num_str, '\0');
+            double val = strtod((const char *)num_str.data, NULL);
+            ecs_vec_free(&num_str);
+
+            if (type == ECS_TYPE_F32) *(float *)out_value = (float)val;
+            else *(double *)out_value = val;
+            return true;
+        }
+        case ECS_TYPE_BOOL: {
+            ecs_string_t bool_str = ecs_scanner_take_identifier(&scanner);
+            if (bool_str.count == 0) {
+                bool_str = ecs_scanner_take_number(&scanner);
+            }
+            if (bool_str.count == 0) {
+                ecs_vec_free(&bool_str);
+                return false;
+            }
+            ecs_string_push(&bool_str, '\0');
+            const char *str = (const char *)bool_str.data;
+            *(bool *)out_value = (strcmp(str, "true") == 0 || strcmp(str, "1") == 0);
+            ecs_vec_free(&bool_str);
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+void stdio_devtool_command_set(ecs_world_t *world, const char *args)
+{
+    command_args_t cmd_args;
+    command_args_init(&cmd_args, args);
+
+    if (command_args_count(&cmd_args) != 3) {
+        printf("Usage: set <entity_name_or_index> <Component.field> <value>\n");
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    const char *entity_str = command_args_get(&cmd_args, 0);
+    const char *field_path = command_args_get(&cmd_args, 1);
+    const char *value_str = command_args_get(&cmd_args, 2);
+
+    ecs_entity_t entity;
+    if (!command_args_parse_entity(world, entity_str, &entity)) {
+        printf("Entity '%s' not found or not alive\n", entity_str);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    char component_name[MAX_TOKEN_LEN];
+    char field_name[MAX_TOKEN_LEN];
+    const char *dot = strchr(field_path, '.');
+    if (!dot) {
+        printf("Error: Invalid field path '%s'. Expected format: Component.field\n", field_path);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    size_t component_len = dot - field_path;
+    if (component_len >= MAX_TOKEN_LEN) {
+        printf("Error: Component name too long\n");
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    strncpy(component_name, field_path, component_len);
+    component_name[component_len] = '\0';
+
+    strncpy(field_name, dot + 1, MAX_TOKEN_LEN - 1);
+    field_name[MAX_TOKEN_LEN - 1] = '\0';
+
+    ecs_entity_t component = ecs_lookup(world, component_name);
+    if (component.value == 0 || !ecs_is_alive(world, component)) {
+        printf("Component '%s' not found\n", component_name);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    if (!ecs_has(world, entity, component)) {
+        printf("Entity '%s' does not have component '%s'\n", entity_str, component_name);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    if (!ecs_has(world, component, ecs_id(EcsStruct))) {
+        printf("Component '%s' is not reflected\n", component_name);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    EcsStruct *component_struct = ecs_get(world, component, ecs_id(EcsStruct));
+    if (!component_struct) {
+        printf("Error: Could not get EcsStruct for component '%s'\n", component_name);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    void *component_data = ecs_get(world, entity, component);
+    if (!component_data) {
+        printf("Error: Could not get component data\n");
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    const ecs_field_t *field = NULL;
+    for (size_t i = 0; i < component_struct->fields.count; i++) {
+        const ecs_field_t *f = ECS_VEC_GET(ecs_field_t, &component_struct->fields, i);
+        if (f->name && strcmp(f->name, field_name) == 0) {
+            field = f;
+            break;
+        }
+    }
+
+    if (!field) {
+        printf("Field '%s' not found in component '%s'\n", field_name, component_name);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    uint8_t value_buffer[32];
+    memset(value_buffer, 0, sizeof(value_buffer));
+
+    if (!parse_value_from_string(value_str, field->type, value_buffer)) {
+        printf("Error: Cannot parse value '%s' for field type %s\n",
+               value_str, rayflect_type_to_string(field->type, field->array_size));
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    if (rayflect_set_field(component_struct, component_data, field_name, value_buffer) != 0) {
+        printf("Error: Failed to set field '%s'\n", field_name);
+        command_args_free(&cmd_args);
+        return;
+    }
+
+    printf("Set %s.%s = %s\n", component_name, field_name, value_str);
+    command_args_free(&cmd_args);
 }

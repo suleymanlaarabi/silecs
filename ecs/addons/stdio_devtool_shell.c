@@ -94,6 +94,12 @@ static bool cmd_exit(ecs_world_t *world, const char *args)
     exit(0);
 }
 
+static bool cmd_set(ecs_world_t *world, const char *args)
+{
+    stdio_devtool_command_set(world, args);
+    return true;
+}
+
 static bool cmd_new(ecs_world_t *world, const char *args)
 {
     stdio_devtool_command_new(world, args);
@@ -182,6 +188,7 @@ static const command_entry_t commands[] = {
     { "query", 5, cmd_query, "query <query>" },
     { "exit", 4, cmd_exit, "exit" },
     { "new", 3, cmd_new, "new <name> [components...]" },
+    { "set", 3, cmd_set, "set <entity_name_or_index> <Component.field> <value>" },
     { "set_name", 8, cmd_set_name, "set_name <entity_index> <name>" },
     { "rayflect", 8, cmd_print_component, "print_component <entity_index> <component>" },
     { "inspect", 7, cmd_inspect_entity_component, "inspect <entity_name_or_index> <component_name>" },
